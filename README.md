@@ -1,1 +1,214 @@
-# Soul Memory System v2.1 🧠 **Intelligent Memory Management System** - Long-term memory framework for AI Agents ## ✨ Features | Module | Function | Description | |--------|----------|-------------| | **A: Priority Parser** | Priority Parser | [C]/[I]/[N] tag parsing + semantic auto-detection | | **B: Vector Search** | Vector Search | Keyword indexing + semantic expansion search (local) | | **C: Dynamic Classifier** | Dynamic Classifier | Auto-learn categories | | **D: Version Control** | Version Control | Git integration + version rollback | | **E: Memory Decay** | Memory Decay | Time decay + cleanup suggestions | | **F: Auto-Trigger** | Auto-Trigger | Auto-search memory before response | ## 🚀 Quick Start ### Installation ```bash curl -sSL https://raw.githubusercontent.com/kingofqin2026/Soul-Memory-/main/install.sh | bash ``` ### Manual Installation ```bash # Download git clone https://github.com/kingofqin2026/Soul-Memory-.git cd Soul-Memory- # Test python3 test_all_modules.py ``` ### Usage ```python from core import SoulMemorySystem # Initialize system system = SoulMemorySystem() system.initialize() # Search memory results = system.search("user preferences", top_k=5) # Add memory memory_id = system.add_memory("[C] User likes dark mode") # Auto-trigger (before response) context = system.pre_response_trigger("What are user preferences?") ``` ## 📋 Feature Details ### Priority System - **[C] Critical**: Critical information, must remember - **[I] Important**: Important items, need attention - **[N] Normal**: Daily chat, can decay ### Keyword Search Local implementation, no external APIs: - Keyword indexing - Synonym expansion - Similarity scoring ### Classification System Default categories (customizable): - User_Identity - Tech_Config - Project - Science - History - General ## 🏗️ Architecture ``` soul-memory-v2.1/ ├── core.py                 # Core system ├── modules/                # 6 feature modules │   ├── priority_parser.py │   ├── vector_search.py │   ├── dynamic_classifier.py │   ├── version_control.py │   ├── memory_decay.py │   └── auto_trigger.py ├── cache/                  # Cache directory (auto-generated) ├── test_all_modules.py   # Test suite └── README.md             # Documentation ``` ## 🔒 Privacy & Security - ✅ No external API calls - ✅ No cloud service dependency - ✅ Domain isolation, no data sharing - ✅ Open source MIT License ## 📐 Technical Details - **Python Version**: 3.7+ - **Dependencies**: No external dependencies (pure Python standard library) - **Storage**: Local JSON files - **Search**: Keyword matching + semantic expansion - **Classification**: Dynamic learning + preset rules ## 🧪 Testing ```bash python3 test_all_modules.py ``` Expected output: ``` ================================================== 🧠 Soul Memory System v2.1 - Test Suite ================================================== 📦 Testing Module A: Priority Parser... ✅ Priority Parser: PASS 📦 Testing Module B: Vector Search... ✅ Vector Search: PASS ... ================================================== 📊 Results: 7 passed, 0 failed ================================================== ✅ All tests passed! ``` ## 📝 Version History - **v2.1.0** (2026-02-17): Rebranded as Soul Memory, removed sensitive content, technical neutralization - **v2.0.0** (2026-02-17): Self-hosted version - **v1.9.1**: Auto-Trigger module ## 📄 License MIT License - see LICENSE ## 🙏 Acknowledgments Soul Memory System v2.1 is a **personal AI assistant memory management tool**, designed for personal use, not a social media automation tool. --- © 2026 Soul Memory System
+<div align="center">
+
+# 🧠 Soul Memory System v2.1
+
+### Intelligent Memory Management System
+
+**Long-term memory framework for AI Agents**
+
+[![Python 3.7+](https://img.shields.io/badge/python-3.7%2B-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
+
+</div>
+
+---
+
+## ✨ Features
+
+Six powerful modules for complete memory management:
+
+| Module | Function | Description |
+|:-------:|:---------:|:------------|
+| **A** | Priority Parser | `[C]/[I]/[N]` tag parsing + semantic auto-detection |
+| **B** | Vector Search | Keyword indexing + semantic expansion (local) |
+| **C** | Dynamic Classifier | Auto-learn categories from memory |
+| **D** | Version Control | Git integration + version rollback |
+| **E** | Memory Decay | Time-based decay + cleanup suggestions |
+| **F** | Auto-Trigger | Auto-search memory before every response |
+
+---
+
+## 🚀 Quick Start
+
+### One-Line Installation
+
+```bash
+curl -sSL https://raw.githubusercontent.com/kingofqin2026/Soul-Memory-/main/install.sh | bash
+```
+
+### Manual Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/kingofqin2026/Soul-Memory-.git
+cd Soul-Memory-
+
+# Run tests to verify
+python3 test_all_modules.py
+```
+
+### Basic Usage
+
+```python
+from core import SoulMemorySystem
+
+# Initialize the system
+system = SoulMemorySystem()
+system.initialize()
+
+# Search memory
+results = system.search("user preferences", top_k=5)
+
+# Add new memory
+memory_id = system.add_memory("[C] User prefers dark mode")
+
+# Auto-trigger (pre-response search)
+context = system.pre_response_trigger("What are the user's preferences?")
+```
+
+---
+
+## 📋 Feature Details
+
+### Priority System
+
+Level tags determine memory importance:
+
+| Tag | Level | Behavior |
+|-----|-------|----------|
+| `[C]` | **Critical** | Never decays, always retained |
+| `[I]` | **Important** | Slow decay, 90-day retention |
+| `[N]` | **Normal** | Fast decay, 30-day retention |
+
+### Keyword Search
+
+**Pure local implementation** - no external APIs:
+
+- ✅ Full-text keyword indexing
+- ✅ Semantic synonym expansion
+- ✅ Similarity scoring with priority weighting
+- ✅ Category-based filtering
+
+### Classification System
+
+Default categories (fully customizable):
+
+> **User_Identity** | **Tech_Config** | **Project** | **Science** | **History** | **General**
+
+---
+
+## 🏗️ Architecture
+
+```
+soul-memory-v2.1/
+│
+├── core.py                    # Core system orchestrator
+├── modules/                   # 6 functional modules
+│   ├── priority_parser.py    # [A] Priority parser
+│   ├── vector_search.py      # [B] Vector search engine
+│   ├── dynamic_classifier.py # [C] Dynamic classifier
+│   ├── version_control.py    # [D] Git integration
+│   ├── memory_decay.py       # [E] Decay algorithm
+│   └── auto_trigger.py       # [F] Auto-trigger
+│
+├── cache/                     # Auto-generated cache
+├── test_all_modules.py       # Full test suite
+└── README.md                 # You are here 📖
+```
+
+---
+
+## 🔒 Privacy & Security
+
+> **Your data stays under your control**
+
+- ✅ **No external API calls** - 100% offline-compatible
+- ✅ **No cloud services** - No third-party dependencies
+- ✅ **Domain isolation** - Complete data separation
+- ✅ **Open source** - Transparent MIT License
+
+---
+
+## 📐 Technical Details
+
+| Specification | Details |
+|---------------|---------|
+| **Python Version** | 3.7+ |
+| **Dependencies** | None (pure Python standard library) |
+| **Storage** | Local JSON files |
+| **Search Engine** | Keyword matching + semantic expansion |
+| **Classification** | Dynamic learning + preset rules |
+| **Memory Format** | Markdown with priority tags |
+
+---
+
+## 🧪 Testing
+
+Run the complete test suite:
+
+```bash
+python3 test_all_modules.py
+```
+
+### Expected Output
+
+```
+==================================================
+🧠 Soul Memory System v2.1 - Test Suite
+==================================================
+
+📦 Testing Module A: Priority Parser...
+  ✅ Priority Parser: PASS
+
+📦 Testing Module B: Vector Search...
+  ✅ Vector Search: PASS
+
+📦 Testing Module C: Dynamic Classifier...
+  ✅ Dynamic Classifier: PASS
+
+📦 Testing Module D: Version Control...
+  ✅ Version Control: PASS
+
+📦 Testing Module E: Memory Decay...
+  ✅ Memory Decay: PASS
+
+📦 Testing Module F: Auto-Trigger...
+  ✅ Auto-Trigger: PASS
+
+==================================================
+📊 Results: 7 passed, 0 failed
+==================================================
+✅ All tests passed!
+```
+
+---
+
+## 📝 Version History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| **v2.1.0** | 2026-02-17 | Rebranded as Soul Memory, removed sensitive content, technical neutralization, English localization |
+| **v2.0.0** | 2026-02-17 | Self-hosted version with complete independence |
+| **v1.9.1** | 2026-02-17 | Auto-Trigger module added |
+
+---
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) for details
+
+---
+
+<div align="center">
+
+## 🙏 Acknowledgments
+
+**Soul Memory System v2.1** is a **personal AI assistant memory management tool**, designed for personal use.
+
+---
+
+made with ❤️ by **kingofqin2026**
+
+[⬆ Back to Top](#-soul-memory-system-v21)
+
+</div>
