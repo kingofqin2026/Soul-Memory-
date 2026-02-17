@@ -1,0 +1,11 @@
+# Soul Memory System v1.9.1 Dependencies
+
+# Core dependencies (none required - uses Python stdlib only)
+# The system is designed to be lightweight and dependency-free
+
+# Optional: For enhanced functionality
+# numpy>=1.20.0  # For advanced vector operations (future)
+# scikit-learn>=0.24.0  # For ML-based classification (future)
+
+# Development dependencies
+# pytest>=6.0.0  # For running tests
