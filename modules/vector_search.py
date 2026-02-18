@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 """
-Soul Memory Module B: Vector Search Engine
-Local keyword-based semantic search (no external APIs)
-
+Soul Memory Module B: Vector Search Engine (v2.2)
+Local keyword-based semantic search with CJK support
 Author: Soul Memory System
-Date: 2026-02-17
+Date: 2026-02-18
 """
-
 import json
 import hashlib
 import os
@@ -41,56 +39,97 @@ class MemorySegment:
 
 class VectorSearch:
     """
-    Vector Search Engine
-    
-    Local keyword-based semantic search.
-    No external API dependencies.
+    Vector Search Engine v2.2
+    - CJK intelligent segmentation (无需外部依赖)
+    - Local keyword-based semantic search
     """
     
-    # Generic semantic expansions (neutral)
+    VERSION = "2.2.0"
+    
+    # CJK Unicode ranges
+    CJK_RANGES = [
+        (0x4E00, 0x9FFF),
+        (0x3400, 0x4DBF),
+        (0x3040, 0x309F),
+        (0x30A0, 0x30FF),
+    ]
+    
     SEMANTIC_EXPANSIONS = {
-        # User related
         "user": ["用戶", "user", "preferences"],
         "preferences": ["喜好", "偏好", "喜歡"],
-        
-        # Technical
-        "config": ["配置", "設定", "settings", "configuration"],
+        "config": ["配置", "設定", "settings"],
         "api": ["API", "接口", "endpoint"],
         "memory": ["記憶", "memory", "context"],
-        
-        # Project
         "project": ["專案", "項目", "project"],
         "task": ["任務", "工作", "task"],
-        "note": ["筆記", "記錄", "note"],
     }
-    
+
     def __init__(self):
         self.segments: List[MemorySegment] = []
         self.keyword_index: Dict[str, List[str]] = {}
-    
+
+    def _is_cjk(self, char: str) -> bool:
+        """Check if character is CJK"""
+        code = ord(char)
+        for start, end in self.CJK_RANGES:
+            if start <= code <= end:
+                return True
+        return False
+
     def _extract_keywords(self, text: str) -> List[str]:
-        """Extract keywords from text (支持中英文分词)"""
-        # Remove markdown symbols
-        text = re.sub(r"[#*_`\[\]()]", " ", text)
-        # 在中文标点符号处添加空格，实现中文分词
-        text = re.sub(r"([，。！？：；,《》【】（）])", r" \1 ", text)
-        # Split by whitespace
-        words = text.split()
-        # Filter keywords (length >= 2)
-        keywords = [w.lower() for w in words if len(w) >= 2]
-        return list(set(keywords))
-    
+        """Extract keywords (v2.2 CJK智能分词)"""
+        text = re.sub(r"[#*_`\[\](){}]", " ", text)
+        
+        result = []
+        current_word = ""
+        
+        for char in text:
+            if self._is_cjk(char):
+                if current_word:
+                    result.append(current_word)
+                    current_word = ""
+                result.append(char)
+            elif char.isalnum():
+                current_word += char
+            else:
+                if current_word:
+                    result.append(current_word)
+                    current_word = ""
+        
+        if current_word:
+            result.append(current_word)
+        
+        keywords = []
+        i = 0
+        while i < len(result):
+            word = result[i]
+            if len(word) >= 1:
+                keywords.append(word.lower())
+            # Create bigram for adjacent CJK characters (single chars only)
+            if i + 1 < len(result) and len(word) == 1 and len(result[i+1]) == 1:
+                if self._is_cjk(word) and self._is_cjk(result[i+1]):
+                    bigram = word + result[i+1]
+                    keywords.append(bigram.lower())
+            i += 1
+        
+        seen = set()
+        filtered = []
+        for k in keywords:
+            if k not in seen and len(k) >= 1:
+                seen.add(k)
+                filtered.append(k)
+        
+        return filtered
+
     def _expand_query(self, query: str) -> List[str]:
         """Expand query with semantic synonyms"""
         keywords = self._extract_keywords(query)
         expanded = set(keywords)
-        
         for kw in keywords:
             if kw in self.SEMANTIC_EXPANSIONS:
                 expanded.update(self.SEMANTIC_EXPANSIONS[kw])
-        
         return list(expanded)
-    
+
     def add_segment(self, segment: Dict[str, Any]):
         """Add a memory segment"""
         ms = MemorySegment(
@@ -98,88 +137,84 @@ class VectorSearch:
             content=segment['content'],
             source=segment.get('source', 'unknown'),
             line_number=segment.get('line_number', 0),
-            category=segment.get('category', ''),
+            category=segment.get('category', ''), 
             priority=segment.get('priority', 'N'),
             keywords=segment.get('keywords', self._extract_keywords(segment['content']))
         )
         self.segments.append(ms)
         
-        # Update keyword index
         for kw in ms.keywords:
             if kw not in self.keyword_index:
                 self.keyword_index[kw] = []
             self.keyword_index[kw].append(ms.id)
-    
-    def index_file(self, file_path: Path):
-        """Index a memory file"""
-        if not file_path.exists():
-            return
-        
-        if file_path.is_dir():
-            for f in file_path.glob("*.md"):
-                self._index_single_file(f)
-        else:
-            self._index_single_file(file_path)
-    
-    def _index_single_file(self, file_path: Path):
-        """Index a single file"""
-        with open(file_path, 'r', encoding='utf-8') as f:
-            lines = f.readlines()
-        
-        for i, line in enumerate(lines):
-            line = line.strip()
-            if not line or line.startswith('#'):
-                continue
-            
-            self.add_segment({
-                'content': line,
-                'source': str(file_path),
-                'line_number': i + 1
-            })
-    
+
     def search(self, query: str, top_k: int = 5) -> List[SearchResult]:
-        """Search memory"""
+        """Search memory with CJK support"""
         query_keywords = self._expand_query(query)
+        scores = {}
         
-        # Calculate scores
-        scores: Dict[str, float] = {}
         for kw in query_keywords:
             if kw in self.keyword_index:
                 for seg_id in self.keyword_index[kw]:
                     scores[seg_id] = scores.get(seg_id, 0) + 1
         
-        # Normalize scores
-        max_score = max(scores.values()) if scores else 1
-        for seg_id in scores:
-            scores[seg_id] /= max_score
-        
-        # Get top results
-        sorted_ids = sorted(scores.keys(), key=lambda x: scores[x], reverse=True)[:top_k]
-        
+        sorted_scores = sorted(scores.items(), key=lambda x: x[1], reverse=True)
         results = []
-        for seg_id in sorted_ids:
-            for seg in self.segments:
-                if seg.id == seg_id:
-                    results.append(SearchResult(
-                        content=seg.content,
-                        score=scores[seg_id],
-                        source=seg.source,
-                        line_number=seg.line_number,
-                        category=seg.category,
-                        priority=seg.priority
-                    ))
-                    break
+        
+        for seg_id, score in sorted_scores[:top_k]:
+            seg = next((s for s in self.segments if s.id == seg_id), None)
+            if seg:
+                results.append(SearchResult(
+                    content=seg.content,
+                    score=score,
+                    source=seg.source,
+                    line_number=seg.line_number,
+                    category=seg.category,
+                    priority=seg.priority
+                ))
         
         return results
-    
-    def load_index(self, data: Dict[str, Any]):
-        """Load index from data"""
-        for seg in data.get('segments', []):
-            self.add_segment(seg)
-    
+
+    def index_file(self, file_path: Path):
+        """Index a markdown file"""
+        if not file_path.exists():
+            return
+        
+        with open(file_path, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+        
+        current_category = ""
+        current_priority = "N"
+        
+        for i, line in enumerate(lines, 1):
+            line = line.strip()
+            if not line:
+                continue
+            
+            if line.startswith('#'):
+                current_category = line.lstrip('#').strip()
+                continue
+            
+            if '[C]' in line:
+                current_priority = 'C'
+            elif '[I]' in line:
+                current_priority = 'I'
+            elif '[N]' in line:
+                current_priority = 'N'
+            
+            segment = {
+                'content': line,
+                'source': str(file_path),
+                'line_number': i,
+                'category': current_category,
+                'priority': current_priority
+            }
+            self.add_segment(segment)
+
     def export_index(self) -> Dict[str, Any]:
-        """Export index to data"""
+        """Export index to dict"""
         return {
+            'version': self.VERSION,
             'segments': [
                 {
                     'id': s.id,
@@ -194,13 +229,22 @@ class VectorSearch:
             ]
         }
 
-
-if __name__ == "__main__":
-    # Test
-    vs = VectorSearch()
-    vs.add_segment({'content': 'User prefers dark mode theme', 'category': 'preferences'})
-    vs.add_segment({'content': 'API endpoint configured at localhost:8080', 'category': 'config'})
-    
-    results = vs.search('user preferences')
-    for r in results:
-        print(f"[{r.priority}] {r.score:.2f} {r.content}")
+    def load_index(self, data: Dict[str, Any]):
+        """Load index from dict"""
+        self.segments = []
+        self.keyword_index = {}
+        for seg_data in data.get('segments', []):
+            ms = MemorySegment(
+                id=seg_data.get('id', ''),
+                content=seg_data.get('content', ''),
+                source=seg_data.get('source', ''),
+                line_number=seg_data.get('line_number', 0),
+                category=seg_data.get('category', ''),
+                priority=seg_data.get('priority', 'N'),
+                keywords=seg_data.get('keywords', [])
+            )
+            self.segments.append(ms)
+            for kw in ms.keywords:
+                if kw not in self.keyword_index:
+                    self.keyword_index[kw] = []
+                self.keyword_index[kw].append(ms.id)

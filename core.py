@@ -55,7 +55,7 @@ class SoulMemorySystem:
     - Pre-response auto-trigger
     """
 
-    VERSION = "2.1.0"
+    VERSION = "2.2.0"
 
     def __init__(self, base_path: Optional[str] = None):
         """Initialize memory system"""
@@ -88,11 +88,17 @@ class SoulMemorySystem:
             print("   Building index...")
             memory_files = [
                 Path.home() / ".openclaw" / "workspace" / "MEMORY.md",
-                Path.home() / ".openclaw" / "workspace" / "memory"
             ]
+            memory_dir = Path.home() / ".openclaw" / "workspace" / "memory"
+            
             for memory_file in memory_files:
-                if memory_file.exists():
+                if memory_file.exists() and memory_file.is_file():
                     self.vector_search.index_file(memory_file)
+            
+            # Index all .md files in memory directory
+            if memory_dir.exists() and memory_dir.is_dir():
+                for md_file in memory_dir.glob("*.md"):
+                    self.vector_search.index_file(md_file)
 
             # Save index
             data = self.vector_search.export_index()
@@ -127,7 +133,7 @@ class SoulMemorySystem:
             'source': 'manual_add',
             'line_number': 0,
             'category': category,
-            'priority': parsed.priority_tag,
+            'priority': parsed.priority.value,
             'timestamp': datetime.now().isoformat(),
             'keywords': self.vector_search._extract_keywords(content)
         }
@@ -164,7 +170,7 @@ class SoulMemorySystem:
         
         # 解析优先级
         parsed = self.priority_parser.parse(assistant_response)
-        priority = parsed.priority_tag
+        priority = parsed.priority.value
         
         # 根据阈值决定是否保存
         priority_order = {"C": 3, "I": 2, "N": 1}
