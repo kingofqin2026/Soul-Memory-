@@ -162,16 +162,13 @@ class SoulMemorySystem:
         """
         Post-response auto-save trigger
         自动识别重要内容并保存到记忆
+        
+        v3.1.1 Hotfix: 使用追加模式寫入記憶檔案，避免 OpenClaw 會話覆蓋問題
         """
+        from datetime import datetime
+        
         # 檢測是否為粵語
         is_canto, canto_conf = self.cantonese_branch.detect_cantonese(assistant_response)
-        
-        # 自动识别内容重要度
-        content_to_save = f"[Auto-Save] Q: {user_query}\nA: {assistant_response[:500]}"
-        
-        # 如果是粵語，添加標籤
-        if is_canto and canto_conf >= 0.3:
-            content_to_save = f"[Cantonese] {content_to_save}"
         
         # 解析优先级
         parsed = self.priority_parser.parse(assistant_response)
@@ -182,19 +179,50 @@ class SoulMemorySystem:
         threshold_val = priority_order.get(importance_threshold, 1)
         content_val = priority_order.get(priority, 1)
         
-        if content_val >= threshold_val:
-            # 自动分类
-            category = self.classifier.classify(assistant_response)
-            
-            # 添加到记忆
-            memory_id = self.add_memory(
-                content=content_to_save,
-                category=category
-            )
-            print(f"📝 Auto-saved [{priority}] memory: {memory_id}")
-            return memory_id
+        if content_val < threshold_val:
+            return None
         
-        return None
+        # 生成唯一記憶 ID (加入時間戳避免覆蓋)
+        timestamp = datetime.now()
+        memory_id = hashlib.md5(
+            f"{user_query}{timestamp.isoformat()}".encode()
+        ).hexdigest()[:8]
+        
+        # ===== v3.1.1 Hotfix: 雙軌保存機制 =====
+        
+        # 1. 保存到 JSON 索引 (原有機制)
+        content_to_save = f"[Auto-Save] Q: {user_query}\nA: {assistant_response[:500]}"
+        if is_canto and canto_conf >= 0.3:
+            content_to_save = f"[Cantonese] {content_to_save}"
+        
+        category = self.classifier.classify(assistant_response)
+        
+        # 添加到 JSON 索引
+        memory_id_json = self.add_memory(content=content_to_save, category=category)
+        
+        # 2. 【關鍵】追加寫入每日記憶檔案 (防止覆蓋)
+        daily_file = Path.home() / ".openclaw" / "workspace" / "memory" / f"{timestamp.strftime('%Y-%m-%d')}.md"
+        daily_file.parent.mkdir(parents=True, exist_ok=True)
+        
+        # 使用追加模式 "a" 而非覆蓋模式 "w"
+        backup_entry = f"""
+## [{priority}] ({timestamp.strftime('%H:%M:%S')}) {memory_id}
+**Query:** {user_query[:100]}{'...' if len(user_query) > 100 else ''}
+
+**Response:** {assistant_response[:300]}{'...' if len(assistant_response) > 300 else ''}
+
+**Meta:** Auto-save | Priority: [{priority}] | Category: {category}
+{'**Cantonese:** Yes (confidence: {:.2f})'.format(canto_conf) if is_canto else ''}
+---
+"""
+        try:
+            with open(daily_file, "a", encoding="utf-8") as f:
+                f.write(backup_entry)
+            print(f"📝 Auto-saved [{priority}] memory: {memory_id} (backup to {daily_file.name})")
+        except Exception as e:
+            print(f"⚠️ Backup write failed: {e}")
+        
+        return memory_id
     
     # ========== v3.1.0: Cantonese Grammar Branch Methods ==========
     
