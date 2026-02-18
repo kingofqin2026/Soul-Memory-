@@ -69,16 +69,15 @@ class VectorSearch:
         self.keyword_index: Dict[str, List[str]] = {}
     
     def _extract_keywords(self, text: str) -> List[str]:
-        """Extract keywords from text"""
+        """Extract keywords from text (支持中英文分词)"""
         # Remove markdown symbols
-        text = re.sub(r'[#*_`\[\]()]', ' ', text)
-        
+        text = re.sub(r"[#*_`\[\]()]", " ", text)
+        # 在中文标点符号处添加空格，实现中文分词
+        text = re.sub(r"([，。！？：；,《》【】（）])", r" \1 ", text)
         # Split by whitespace
         words = text.split()
-        
         # Filter keywords (length >= 2)
         keywords = [w.lower() for w in words if len(w) >= 2]
-        
         return list(set(keywords))
     
     def _expand_query(self, query: str) -> List[str]:

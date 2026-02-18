@@ -45,7 +45,7 @@ class MemoryQueryResult:
 class SoulMemorySystem:
     """
     Soul Memory System v2.1
-    
+
     Features:
     - Priority-based memory management [C]/[I]/[N]
     - Semantic keyword search (local, no external APIs)
@@ -54,15 +54,15 @@ class SoulMemorySystem:
     - Memory decay & cleanup
     - Pre-response auto-trigger
     """
-    
+
     VERSION = "2.1.0"
-    
+
     def __init__(self, base_path: Optional[str] = None):
         """Initialize memory system"""
         self.base_path = Path(base_path) if base_path else Path(__file__).parent
         self.cache_path = self.base_path / "cache"
         self.cache_path.mkdir(exist_ok=True)
-        
+
         # Initialize modules
         self.priority_parser = PriorityParser()
         self.vector_search = VectorSearch()
@@ -70,13 +70,13 @@ class SoulMemorySystem:
         self.version_control = VersionControl(str(self.base_path))
         self.memory_decay = MemoryDecay(self.cache_path)
         self.auto_trigger = AutoTrigger(self)
-        
+
         self.indexed = False
-        
+
     def initialize(self):
         """Initialize and build index"""
         print(f"🧠 Initializing Soul Memory System v{self.VERSION}...")
-        
+
         # Load or build search index
         index_file = self.cache_path / "index.json"
         if index_file.exists():
@@ -93,34 +93,34 @@ class SoulMemorySystem:
             for memory_file in memory_files:
                 if memory_file.exists():
                     self.vector_search.index_file(memory_file)
-            
+
             # Save index
             data = self.vector_search.export_index()
             with open(index_file, 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
             print(f"   Built index with {len(data.get('segments', []))} segments")
-        
+
         self.indexed = True
         print(f"✅ Ready")
         return self
-    
+
     def search(self, query: str, top_k: int = 5) -> List[SearchResult]:
         """Search memory"""
         if not self.indexed:
             self.initialize()
         return self.vector_search.search(query, top_k)
-    
+
     def add_memory(self, content: str, category: Optional[str] = None) -> str:
         """Add new memory"""
         memory_id = hashlib.md5(content.encode()).hexdigest()[:8]
-        
+
         # Parse priority
         parsed = self.priority_parser.parse(content)
-        
+
         # Classify if category not provided
         if not category:
             category = self.classifier.classify(content)
-        
+
         segment = {
             'id': memory_id,
             'content': content,
@@ -131,20 +131,60 @@ class SoulMemorySystem:
             'timestamp': datetime.now().isoformat(),
             'keywords': self.vector_search._extract_keywords(content)
         }
-        
+
         self.vector_search.add_segment(segment)
-        
+
         # Save updated index
         data = self.vector_search.export_index()
         with open(self.cache_path / "index.json", 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
-        
+
         return memory_id
-    
+
     def pre_response_trigger(self, query: str) -> Dict[str, Any]:
         """Pre-response auto-trigger"""
         return self.auto_trigger.trigger(query)
-    
+
+    def post_response_trigger(self, user_query: str, assistant_response: str, 
+                               importance_threshold: str = "N") -> Optional[str]:
+        """
+        Post-response auto-save trigger
+        自动识别重要内容并保存到记忆
+        
+        Args:
+            user_query: 用户问题
+            assistant_response: 助手回答
+            importance_threshold: 最低重要度阈值 [C]/[I]/[N]
+        
+        Returns:
+            memory_id if saved, None otherwise
+        """
+        # 自动识别内容重要度
+        content_to_save = f"[Auto-Save] Q: {user_query}\nA: {assistant_response[:500]}"
+        
+        # 解析优先级
+        parsed = self.priority_parser.parse(assistant_response)
+        priority = parsed.priority_tag
+        
+        # 根据阈值决定是否保存
+        priority_order = {"C": 3, "I": 2, "N": 1}
+        threshold_val = priority_order.get(importance_threshold, 1)
+        content_val = priority_order.get(priority, 1)
+        
+        if content_val >= threshold_val:
+            # 自动分类
+            category = self.classifier.classify(assistant_response)
+            
+            # 添加到记忆
+            memory_id = self.add_memory(
+                content=content_to_save,
+                category=category
+            )
+            print(f"📝 Auto-saved [{priority}] memory: {memory_id}")
+            return memory_id
+        
+        return None
+
     def stats(self) -> Dict[str, Any]:
         """System statistics"""
         return {
@@ -163,7 +203,7 @@ if __name__ == "__main__":
     # Test
     system = SoulMemorySystem()
     system.initialize()
-    
+
     # Test search
     results = system.search("memory system test", top_k=3)
     print(f"\nFound {len(results)} results")
