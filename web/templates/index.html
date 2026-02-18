@@ -4,16 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🧠 Soul Memory Web UI</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/style.css?v=3.0.1">
 </head>
 <body>
     <div class="container">
         <!-- Header -->
         <header class="header">
             <h1>🧠 Soul Memory System</h1>
-            <div class="status-badge" id="system-status">
-                <span class="status-dot"></span>
-                <span class="status-text">Loading...</span>
+            <div class="status-row">
+                <div class="status-badge" id="system-status">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Loading...</span>
+                </div>
+                <div class="status-badge task-count" id="task-count" style="display: none;">
+                    <span>📋 <span id="active-tasks">0</span> tasks</span>
+                </div>
             </div>
         </header>
 

@@ -116,12 +116,24 @@ async def get_stats():
         if p in priority_counts:
             priority_counts[p] += 1
     
+    # Check for active tasks
+    active_tasks = [t for t in tasks.values() if t.status == "doing"]
+    has_active_tasks = len(active_tasks) > 0
+    
+    # Determine system status
+    if has_active_tasks:
+        system_status = "busy"
+    else:
+        system_status = "ready"
+    
     return {
         "version": stats["version"],
         "total_segments": stats["total_segments"],
         "categories": stats["categories"],
         "priority_distribution": priority_counts,
         "indexed": stats["indexed"],
+        "status": system_status,
+        "active_tasks": len(active_tasks),
         "timestamp": datetime.now().isoformat()
     }
 
@@ -245,4 +257,87 @@ class AddMemoryRequest(BaseModel):
     content: str
     category: Optional[str] = None
     priority: Optional[str] = None
+
+
+# ============ v3.1.0: Cantonese Grammar Branch API ============
+
+@app.get("/api/cantonese/analyze")
+async def analyze_cantonese(text: str):
+    """
+    分析粵語文本
+    
+    Query params:
+        text: 要分析的文本
+    """
+    if not memory_system:
+        raise HTTPException(status_code=503, detail="System not initialized")
+    
+    result = memory_system.analyze_cantonese(text)
+    
+    return {
+        "text": text,
+        "is_cantonese": result.is_cantonese,
+        "confidence": result.confidence,
+        "detected_particles": result.detected_particles,
+        "suggested_context": result.suggested_context.value,
+        "suggested_intensity": result.suggested_intensity.value,
+        "tone_analysis": result.tone_analysis
+    }
+
+@app.get("/api/cantonese/suggest")
+async def suggest_cantonese(concept: str, context: Optional[str] = None, intensity: Optional[str] = None):
+    """
+    建議廣東話表達
+    
+    Query params:
+        concept: 要表達的概念
+        context: 語境類型 (閒聊/正式/幽默/讓步/強調)
+        intensity: 語氣強度 (輕微/中等/強烈)
+    """
+    if not memory_system:
+        raise HTTPException(status_code=503, detail="System not initialized")
+    
+    suggestions = memory_system.suggest_cantonese_expression(concept, context, intensity)
+    
+    return {
+        "concept": concept,
+        "context": context,
+        "intensity": intensity,
+        "suggestions": suggestions
+    }
+
+@app.post("/api/cantonese/learn")
+async def learn_cantonese_pattern(request: Request):
+    """
+    學習新的廣東話表達模式
+    
+    Body:
+        text: 表達文本
+        context: 語境類型
+        feedback: 用戶反饋 (可選)
+    """
+    if not memory_system:
+        raise HTTPException(status_code=503, detail="System not initialized")
+    
+    body = await request.json()
+    text = body.get("text")
+    context = body.get("context", "閒聊")
+    feedback = body.get("feedback")
+    
+    if not text:
+        raise HTTPException(status_code=400, detail="Text is required")
+    
+    memory_system.learn_cantonese_pattern(text, context, feedback)
+    
+    return {"status": "learned", "text": text, "context": context}
+
+@app.get("/api/cantonese/stats")
+async def get_cantonese_stats():
+    """獲取廣東話分支統計信息"""
+    if not memory_system:
+        raise HTTPException(status_code=503, detail="System not initialized")
+    
+    stats = memory_system.cantonese_branch.get_stats()
+    
+    return stats
 

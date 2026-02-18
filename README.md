@@ -1,14 +1,17 @@
 <div align="center">
 
-# 🧠 Soul Memory System v3.0
+# 🧠 Soul Memory System v3.1.0
 
 ### Intelligent Memory Management System
 
 **Long-term memory framework for AI Agents**
 
+**🆕 v3.1.0 - 廣東話語法分支 | Cantonese Grammar Branch**
+
 [![Python 3.7+](https://img.shields.io/badge/python-3.7%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![CJK Support](https://img.shields.io/badge/CJK-%E4%B8%AD%E6%97%A5%E9%9F%93-red.svg)]()
+[![Cantonese](https://img.shields.io/badge/粵語-支援-orange.svg)]()
 
 </div>
 
@@ -16,7 +19,7 @@
 
 ## ✨ Features
 
-Six powerful modules for complete memory management - **Now with CJK support!**
+Seven powerful modules for complete memory management - **Now with CJK & Cantonese support!**
 
 | Module | Function | Description |
 |:-------:|:---------:|:------------|
@@ -25,12 +28,43 @@ Six powerful modules for complete memory management - **Now with CJK support!**
 | **C** | Dynamic Classifier | Auto-learn categories from memory |
 | **D** | Version Control | Git integration + version rollback |
 | **E** | Memory Decay | Time-based decay + cleanup suggestions |
-| **F** | Auto-Trigger | Pre-response search + **Post-response auto-save** |
+| **F** | Auto-Trigger | Pre-response search + Post-response auto-save |
+| **G** | **Cantonese Branch** | 🆕 語氣詞分級 + 語境映射 + 粵語檢測 |
 | **Web** | Web UI | FastAPI dashboard with real-time stats, search & task monitoring |
 
 ---
 
-## 🚀 Quick Start
+## 🆕 v3.1.0 - 廣東話語法分支
+
+### 🎯 功能概覽
+
+| 功能 | 說明 |
+|------|------|
+| **語氣詞分級** | 輕微/中等/強烈 三級語氣控制 |
+| **語境映射** | 閒聊/正式/幽默/讓步/強調 五種語境 |
+| **粵語檢測** | 自動檢測文本中的粵語元素 |
+| **表達建議** | 根據語境和強度建議最佳廣東話表達 |
+| **模式學習** | 從對話中學習新的表達模式 |
+
+### 📊 語氣強度等級
+
+```
+程度 1：輕微 → 架、啦、囉、喎、嘅
+程度 2：中等 → 真係...啦、都...架、好啦、算啦
+程度 3：強烈 → 好犀利架！、係晒架！、犀利到爆！
+```
+
+### 🎭 語境類型
+
+| 語境 | 適用場景 | 常用表達 |
+|------|---------|---------|
+| **閒聊** | 輕鬆對話 | 架、啦、囉、犀利 |
+| **正式** | 技術討論 | 係咁、所以、咁樣 |
+| **幽默** | 輕鬆幽默 | 衰鬼、犀利到爆、搞掂晒 |
+| **讓步** | 讓步語氣 | 好啦、算啦、咁啦 |
+| **強調** | 強調語氣 | 真係、確實、老實講 |
+
+---
 
 ### One-Line Installation
 

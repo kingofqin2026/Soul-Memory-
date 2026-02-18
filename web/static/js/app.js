@@ -20,10 +20,13 @@ document.addEventListener('DOMContentLoaded', () => {
     refreshTasks();
     updateTimestamp();
     
-    // Auto-refresh every 30 seconds
+    // Auto-refresh every 5 seconds for tasks, 30 seconds for stats
+    setInterval(() => {
+        refreshTasks();
+    }, 5000);
+    
     setInterval(() => {
         loadStats();
-        refreshTasks();
         updateTimestamp();
     }, 30000);
 });
@@ -59,6 +62,30 @@ async function loadStats() {
     }
 }
 
+function updateStatus(status, activeTasks = 0) {
+    const badge = document.getElementById('system-status');
+    const dot = badge.querySelector('.status-dot');
+    const text = badge.querySelector('.status-text');
+    
+    if (status === 'ready' && activeTasks === 0) {
+        dot.className = 'status-dot';
+        text.textContent = '✅ Ready';
+        badge.style.background = '#f6f8fa';
+    } else if (status === 'busy' || activeTasks > 0) {
+        dot.className = 'status-dot busy';
+        text.textContent = `🔄 Busy (${activeTasks} task${activeTasks > 1 ? 's' : ''})`;
+        badge.style.background = '#fff3cd';
+        badge.style.border = '1px solid #f9a825';
+    } else if (status === 'loading') {
+        dot.className = 'status-dot';
+        text.textContent = '🔄 Loading...';
+    } else {
+        dot.className = 'status-dot error';
+        text.textContent = '❌ Error';
+        badge.style.background = '#ffe6e6';
+    }
+}
+
 function updateStatsUI(stats) {
     // Update stat cards
     document.getElementById('total-segments').textContent = stats.total_segments || 0;
@@ -78,23 +105,9 @@ function updateStatsUI(stats) {
     document.getElementById('count-critical').textContent = dist.C;
     document.getElementById('count-important').textContent = dist.I;
     document.getElementById('count-normal').textContent = dist.N;
-}
-
-function updateStatus(status) {
-    const badge = document.getElementById('system-status');
-    const dot = badge.querySelector('.status-dot');
-    const text = badge.querySelector('.status-text');
     
-    if (status === 'ready') {
-        dot.className = 'status-dot';
-        text.textContent = '✅ Ready';
-    } else if (status === 'loading') {
-        dot.className = 'status-dot';
-        text.textContent = '🔄 Loading...';
-    } else {
-        dot.className = 'status-dot error';
-        text.textContent = '❌ Error';
-    }
+    // Update system status with active tasks
+    updateStatus(stats.status, stats.active_tasks || 0);
 }
 
 // ============ Search ============
