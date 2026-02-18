@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🧠 Soul Memory System v2.1
+# 🧠 Soul Memory System v2.2
 
 ### Intelligent Memory Management System
 
@@ -8,6 +8,7 @@
 
 [![Python 3.7+](https://img.shields.io/badge/python-3.7%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![CJK Support](https://img.shields.io/badge/CJK-%E4%B8%AD%E6%97%A5%E9%9F%93-red.svg)]()
 
 </div>
 
@@ -15,16 +16,16 @@
 
 ## ✨ Features
 
-Six powerful modules for complete memory management:
+Six powerful modules for complete memory management - **Now with CJK support!**
 
 | Module | Function | Description |
 |:-------:|:---------:|:------------|
 | **A** | Priority Parser | `[C]/[I]/[N]` tag parsing + semantic auto-detection |
-| **B** | Vector Search | Keyword indexing + semantic expansion (local) |
+| **B** | Vector Search | Keyword indexing + CJK segmentation + semantic expansion |
 | **C** | Dynamic Classifier | Auto-learn categories from memory |
 | **D** | Version Control | Git integration + version rollback |
 | **E** | Memory Decay | Time-based decay + cleanup suggestions |
-| **F** | Auto-Trigger | Auto-search memory before every response |
+| **F** | Auto-Trigger | Pre-response search + **Post-response auto-save** |
 
 ---
 
@@ -62,8 +63,16 @@ results = system.search("user preferences", top_k=5)
 # Add new memory
 memory_id = system.add_memory("[C] User prefers dark mode")
 
-# Auto-trigger (pre-response search)
+# Pre-response: search before answering
 context = system.pre_response_trigger("What are the user's preferences?")
+
+# Post-response: auto-save after answering
+def after_response(user_query, assistant_response):
+    memory_id = system.post_response_trigger(
+        user_query, 
+        assistant_response,
+        importance_threshold="I"  # Save [I] or above
+    )
 ```
 
 ---
@@ -100,7 +109,7 @@ Default categories (fully customizable):
 ## 🏗️ Architecture
 
 ```
-soul-memory-v2.1/
+soul-memory-v2.2/
 │
 ├── core.py                    # Core system orchestrator
 ├── modules/                   # 6 functional modules
@@ -187,6 +196,7 @@ python3 test_all_modules.py
 
 | Version | Date | Changes |
 |---------|------|---------|
+| **v2.2.0** | 2026-02-18 | **CJK Intelligent Segmentation** for Chinese/Japanese/Korean, **Post-Response Auto-Save**, bug fixes |
 | **v2.1.0** | 2026-02-17 | Rebranded as Soul Memory, removed sensitive content, technical neutralization, English localization |
 | **v2.0.0** | 2026-02-17 | Self-hosted version with complete independence |
 | **v1.9.1** | 2026-02-17 | Auto-Trigger module added |
@@ -203,7 +213,7 @@ MIT License - see [LICENSE](LICENSE) for details
 
 ## 🙏 Acknowledgments
 
-**Soul Memory System v2.1** is a **personal AI assistant memory management tool**, designed for personal use.
+**Soul Memory System v2.2** is a **personal AI assistant memory management tool**, designed for personal use.
 
 ---
 
