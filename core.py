@@ -55,7 +55,7 @@ class SoulMemorySystem:
     - Pre-response auto-trigger
     """
 
-    VERSION = "2.2.0"
+    VERSION = "3.0.0"
 
     def __init__(self, base_path: Optional[str] = None):
         """Initialize memory system"""

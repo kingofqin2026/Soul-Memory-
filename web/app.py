@@ -29,7 +29,7 @@ from core import SoulMemorySystem
 # Initialize FastAPI
 app = FastAPI(
     title="Soul Memory Web UI",
-    description="Web interface for Soul Memory System v2.2",
+    description="Web interface for Soul Memory System v3.0",
     version="1.0.0"
 )
 

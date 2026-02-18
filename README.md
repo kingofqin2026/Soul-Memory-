@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🧠 Soul Memory System v2.2
+# 🧠 Soul Memory System v3.0
 
 ### Intelligent Memory Management System
 
@@ -26,6 +26,7 @@ Six powerful modules for complete memory management - **Now with CJK support!**
 | **D** | Version Control | Git integration + version rollback |
 | **E** | Memory Decay | Time-based decay + cleanup suggestions |
 | **F** | Auto-Trigger | Pre-response search + **Post-response auto-save** |
+| **Web** | Web UI | FastAPI dashboard with real-time stats, search & task monitoring |
 
 ---
 
@@ -109,7 +110,7 @@ Default categories (fully customizable):
 ## 🏗️ Architecture
 
 ```
-soul-memory-v2.2/
+soul-memory-v3.0/
 │
 ├── core.py                    # Core system orchestrator
 ├── modules/                   # 6 functional modules
@@ -196,6 +197,7 @@ python3 test_all_modules.py
 
 | Version | Date | Changes |
 |---------|------|---------|
+| **v3.0.0** | 2026-02-18 | **Web UI v1.0**: FastAPI dashboard + real-time stats + task monitoring + CJK + Post-Response |
 | **v2.2.0** | 2026-02-18 | **CJK Intelligent Segmentation** for Chinese/Japanese/Korean, **Post-Response Auto-Save**, bug fixes |
 | **v2.1.0** | 2026-02-17 | Rebranded as Soul Memory, removed sensitive content, technical neutralization, English localization |
 | **v2.0.0** | 2026-02-17 | Self-hosted version with complete independence |
@@ -213,7 +215,7 @@ MIT License - see [LICENSE](LICENSE) for details
 
 ## 🙏 Acknowledgments
 
-**Soul Memory System v2.2** is a **personal AI assistant memory management tool**, designed for personal use.
+**Soul Memory System v3.0** is a **personal AI assistant memory management tool**, designed for personal use.
 
 ---
 
