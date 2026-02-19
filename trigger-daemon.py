@@ -10,14 +10,10 @@ import time
 import logging
 from pathlib import Path
 
-SOUL_MEMORY_PATH = os.path.dirname(os.path.abspath(__file__))
+SOUL_MEMORY_PATH = os.environ.get('SOUL_MEMORY_PATH', os.path.dirname(__file__))
 sys.path.insert(0, SOUL_MEMORY_PATH)
 
-try:
-    from core import SoulMemorySystem
-except ImportError:
-    print("❌ 無法導入 SoulMemorySystem")
-    sys.exit(1)
+from core import SoulMemorySystem
 
 CONFIG_DIR = Path.home() / '.config' / 'soul-memory'
 CONFIG_DIR.mkdir(parents=True, exist_ok=True)
