@@ -152,64 +152,129 @@ class VectorSearch:
         """Search memory with CJK support"""
         query_keywords = self._expand_query(query)
         scores = {}
-        
-        for kw in query_keywords:
-            if kw in self.keyword_index:
-                for seg_id in self.keyword_index[kw]:
-                    scores[seg_id] = scores.get(seg_id, 0) + 1
-        
-        sorted_scores = sorted(scores.items(), key=lambda x: x[1], reverse=True)
+        matches_count = {}  # 記錄每個 segment 匹配的關鍵詞數量
+
+        # 計算每個 segment 的基礎分數（關鍵詞匹配數量，不是匹配次數）
+        for seg in self.segments:
+            matched_keywords = 0
+            for kw in query_keywords:
+                if kw in seg.keywords:
+                    matched_keywords += 1
+
+            if matched_keywords > 0:
+                scores[seg.id] = matched_keywords
+                matches_count[seg.id] = matched_keywords
+
+        # 添加優先級加權
+        for seg in self.segments:
+            if seg.id in scores:
+                priority_boost = {
+                    'C': 3.0,  # Critical: +3 分
+                    'I': 1.5,  # Important: +1.5 分
+                    'N': 0.5,  # Normal: +0.5 分
+                }.get(seg.priority, 0.5)
+                scores[seg.id] += priority_boost
+
+        # 排序：綜合分數優先，優先級其次
+        def sort_key(item):
+            seg_id, score = item
+            seg = next((s for s in self.segments if s.id == seg_id), None)
+            if seg:
+                # 檢查記憶是否包含完整的查詢字符串（給予額外加權）
+                exact_match_bonus = 0
+                content_lower = seg.content.lower()
+                query_lower = query.lower()
+                if query_lower in content_lower:
+                    exact_match_bonus = 2.0
+
+                priority_weight = {'C': 10, 'I': 5, 'N': 0}.get(seg.priority, 0)
+                # 總分 = 關鍵詞匹配 + 優先級加權 + 完整匹配加權
+                total_score = scores[seg_id] + exact_match_bonus
+                return (total_score, priority_weight, matches_count.get(seg.id, 0))
+            return (scores[seg_id], 0, 0)
+
+        sorted_scores = sorted(scores.items(), key=sort_key, reverse=True)
         results = []
-        
+
         for seg_id, score in sorted_scores[:top_k]:
             seg = next((s for s in self.segments if s.id == seg_id), None)
             if seg:
+                # 重新計算總分（包含完整匹配加權）
+                content_lower = seg.content.lower()
+                query_lower = query.lower()
+                exact_match_bonus = 2.0 if query_lower in content_lower else 0.0
+                final_score = scores[seg_id] + exact_match_bonus
+
                 results.append(SearchResult(
                     content=seg.content,
-                    score=score,
+                    score=final_score,
                     source=seg.source,
                     line_number=seg.line_number,
                     category=seg.category,
                     priority=seg.priority
                 ))
-        
+
         return results
 
     def index_file(self, file_path: Path):
-        """Index a markdown file"""
+        """Index a markdown file with block-level indexing"""
         if not file_path.exists():
             return
         
         with open(file_path, 'r', encoding='utf-8') as f:
             lines = f.readlines()
         
-        current_category = ""
-        current_priority = "N"
-        
-        for i, line in enumerate(lines, 1):
-            line = line.strip()
-            if not line:
-                continue
+        i = 0
+        while i < len(lines):
+            line = lines[i]
+            stripped = line.strip()
             
-            if line.startswith('#'):
-                current_category = line.lstrip('#').strip()
-                continue
-            
-            if '[C]' in line:
-                current_priority = 'C'
-            elif '[I]' in line:
-                current_priority = 'I'
-            elif '[N]' in line:
-                current_priority = 'N'
-            
-            segment = {
-                'content': line,
-                'source': str(file_path),
-                'line_number': i,
-                'category': current_category,
-                'priority': current_priority
-            }
-            self.add_segment(segment)
+            # 遇到標題（##）
+            if stripped.startswith('##') and not stripped.startswith('###'):
+                # 收集這個標題下方的內容，直到下一個 ## 標題
+                block_content = []
+                block_start = i + 1
+                
+                # 添加標題（移除 ##）
+                title = stripped.lstrip('#').strip()
+                block_content.append(title)
+                i += 1
+                
+                # 收集內容行（跳過空行，直到下一個 ## 標題）
+                while i < len(lines):
+                    next_line = lines[i].strip()
+                    
+                    # 遇到下一個 ## 標題，停止
+                    if next_line.startswith('##') and not next_line.startswith('###'):
+                        break
+                    
+                    # 非空行才加入
+                    if next_line:
+                        block_content.append(next_line)
+                    
+                    i += 1
+                
+                # 將整個區塊合併為一個 segment
+                full_content = ' | '.join(block_content)
+                
+                # 偵測優先級
+                priority = 'N'
+                if '[C]' in full_content:
+                    priority = 'C'
+                elif '[I]' in full_content:
+                    priority = 'I'
+                
+                segment = {
+                    'content': full_content,
+                    'source': str(file_path),
+                    'line_number': block_start,
+                    'category': title,
+                    'priority': priority
+                }
+                self.add_segment(segment)
+            else:
+                # 非標題行，單獨跳過
+                i += 1
 
     def export_index(self) -> Dict[str, Any]:
         """Export index to dict"""
