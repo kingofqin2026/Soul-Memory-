@@ -1,9 +1,9 @@
 #!/bin/bash
 
 ################################################################################
-# Soul Memory System v2.1 - Installation Script
+# Soul Memory System v3.1.1 - Installation Script
 # 
-# 功能：自動安裝 Soul Memory 系統，確保 auto-trigger 順利運行
+# 功能：自動安裝 Soul Memory 系統，配置 Heartbeat 自動儲存
 # 用法：bash install.sh [--dev] [--path /custom/path]
 ################################################################################
 
@@ -27,7 +27,8 @@ PYTHON_MIN_VERSION="3.7"
 
 print_header() {
     echo -e "${BLUE}╔════════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${BLUE}║     🧠 Soul Memory System v2.1 - Installation Script          ║${NC}"
+    echo -e "${BLUE}║   🧠 Soul Memory System v3.1.1 - Installation Script          ║${NC}"
+    echo -e "${BLUE}║   Hotfix: Dual-Track Persistence + Heartbeat Auto-Save       ║${NC}"
     echo -e "${BLUE}╚════════════════════════════════════════════════════════════════╝${NC}"
     echo ""
 }
@@ -173,7 +174,7 @@ setup_auto_trigger() {
     mkdir -p "$TRIGGER_CONFIG_DIR"
     
     cat > "$TRIGGER_CONFIG_DIR/auto-trigger.conf" << 'CONF'
-# Soul Memory Auto-Trigger Configuration
+# Soul Memory Auto-Trigger Configuration v3.1.1
 ENABLED=true
 TOP_K=5
 PRIORITY_CRITICAL=1.0
@@ -182,9 +183,86 @@ PRIORITY_NORMAL=0.3
 SEARCH_TIMEOUT=5
 CACHE_TTL=3600
 LOG_LEVEL=INFO
+
+# v3.1.1 Hotfix: Post-Response Auto-Save
+POST_RESPONSE_ENABLED=true
+IMPORTANCE_THRESHOLD=I
+DUAL_TRACK_PERSISTENCE=true
+CANTONESE_DETECTION=true
 CONF
     
     print_success "Auto-Trigger 配置已創建: $TRIGGER_CONFIG_DIR/auto-trigger.conf"
+}
+
+setup_heartbeat_auto_save() {
+    print_step "配置 Heartbeat 自動儲存..."
+    
+    HEARTBEAT_FILE="${HOME}/.openclaw/workspace/HEARTBEAT.md"
+    
+    # 檢查 HEARTBEAT.md 是否已包含 v3.1.1 配置
+    if [ -f "$HEARTBEAT_FILE" ] && grep -q "v3.1.1" "$HEARTBEAT_FILE"; then
+        print_success "Heartbeat v3.1.1 配置已存在"
+    else
+        print_warning "Heartbeat 配置需要手動更新或已自動更新"
+    fi
+    
+    # 創建 heartbeat 觸發腳本
+    HEARTBEAT_TRIGGER="${INSTALL_PATH}/heartbeat-trigger.py"
+    
+    cat > "$HEARTBEAT_TRIGGER" << 'TRIGGER'
+#!/usr/bin/env python3
+"""
+Soul Memory Heartbeat Auto-Save Trigger
+v3.1.1 - 自動檢查並保存重要記憶
+"""
+
+import sys
+import os
+from pathlib import Path
+from datetime import datetime
+
+SOUL_MEMORY_PATH = os.environ.get('SOUL_MEMORY_PATH', os.path.dirname(__file__))
+sys.path.insert(0, SOUL_MEMORY_PATH)
+
+from core import SoulMemorySystem
+
+def check_daily_memory():
+    """檢查今日記憶檔案"""
+    today = datetime.now().strftime('%Y-%m-%d')
+    daily_file = Path.home() / ".openclaw" / "workspace" / "memory" / f"{today}.md"
+    
+    if daily_file.exists():
+        with open(daily_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # 計算 Auto-Save 條目數
+        auto_save_count = content.count('[Auto-Save]')
+        return auto_save_count
+    
+    return 0
+
+def main():
+    """Heartbeat 檢查點"""
+    system = SoulMemorySystem()
+    system.initialize()
+    
+    auto_save_count = check_daily_memory()
+    
+    print(f"🩺 Heartbeat 記憶檢查 ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')} UTC)")
+    print(f"- 自動儲存條目：{auto_save_count} 條")
+    print(f"- 記憶系統：v3.1.1 就緒")
+    
+    if auto_save_count > 0:
+        print(f"↳ 已保存至 memory/{datetime.now().strftime('%Y-%m-%d')}.md")
+    else:
+        print("HEARTBEAT_OK")
+
+if __name__ == '__main__':
+    main()
+TRIGGER
+    
+    chmod +x "$HEARTBEAT_TRIGGER"
+    print_success "Heartbeat 觸發腳本已創建: $HEARTBEAT_TRIGGER"
 }
 
 setup_environment() {
@@ -201,7 +279,7 @@ setup_environment() {
         if ! grep -q "SOUL_MEMORY_PATH" "$SHELL_RC"; then
             cat >> "$SHELL_RC" << EOF
 
-# Soul Memory System v2.1
+# Soul Memory System v3.1.1
 export SOUL_MEMORY_PATH="$INSTALL_PATH"
 export PYTHONPATH="\${SOUL_MEMORY_PATH}:\${PYTHONPATH}"
 EOF
@@ -221,8 +299,8 @@ create_trigger_daemon() {
     cat > "$DAEMON_FILE" << 'DAEMON'
 #!/usr/bin/env python3
 """
-Soul Memory Auto-Trigger Daemon
-持續監控並在需要時自動觸發記憶搜索
+Soul Memory Auto-Trigger Daemon v3.1.1
+持續監控並在需要時自動觸發記憶搜索和儲存
 """
 
 import sys
@@ -255,7 +333,8 @@ class TriggerDaemon:
         self.system = SoulMemorySystem()
         self.system.initialize()
         self.running = True
-        logger.info("🧠 Soul Memory Auto-Trigger Daemon 已啟動")
+        logger.info("🧠 Soul Memory Auto-Trigger Daemon v3.1.1 已啟動")
+        logger.info("✅ 雙軌持久化已啟用 (JSON + Daily Markdown)")
     
     def run(self):
         try:
@@ -268,7 +347,7 @@ class TriggerDaemon:
     
     def check_and_trigger(self):
         try:
-            logger.debug("Auto-Trigger 檢查點")
+            logger.debug("Auto-Trigger 檢查點 (v3.1.1)")
         except Exception as e:
             logger.error(f"觸發錯誤: {e}")
     
@@ -298,6 +377,7 @@ verify_installation() {
         "modules/version_control.py"
         "modules/memory_decay.py"
         "modules/auto_trigger.py"
+        "modules/cantonese_syntax.py"
         "README.md"
     )
     
@@ -323,9 +403,16 @@ print_summary() {
     echo ""
     echo -e "${BLUE}╔════════════════════════════════════════════════════════════════╗${NC}"
     echo -e "${BLUE}║                    ✅ 安裝完成                                ║${NC}"
+    echo -e "${BLUE}║              Soul Memory System v3.1.1 Hotfix                 ║${NC}"
     echo -e "${BLUE}╚════════════════════════════════════════════════════════════════╝${NC}"
     echo ""
     echo -e "${GREEN}📍 安裝位置:${NC} $INSTALL_PATH"
+    echo ""
+    echo -e "${GREEN}🎯 v3.1.1 新功能:${NC}"
+    echo "  • 雙軌持久化 (JSON 索引 + 每日 Markdown 備份)"
+    echo "  • Heartbeat 自動儲存"
+    echo "  • 廣東話語法分支"
+    echo "  • 防止 OpenClaw 會話覆蓋"
     echo ""
     echo -e "${GREEN}📋 後續步驟:${NC}"
     echo ""
@@ -336,10 +423,13 @@ print_summary() {
     echo -e "   ${YELLOW}cd $INSTALL_PATH${NC}"
     echo -e "   ${YELLOW}python3 -c \"from core import SoulMemorySystem; s = SoulMemorySystem(); s.initialize(); print('✅ Ready')\"${NC}"
     echo ""
-    echo "3. 使用 Auto-Trigger:"
+    echo "3. 啟動 Auto-Trigger 守護進程:"
     echo -e "   ${YELLOW}python3 $INSTALL_PATH/trigger-daemon.py${NC}"
     echo ""
-    echo "4. 配置文件:"
+    echo "4. 啟動 Heartbeat 觸發:"
+    echo -e "   ${YELLOW}python3 $INSTALL_PATH/heartbeat-trigger.py${NC}"
+    echo ""
+    echo "5. 配置文件:"
     echo -e "   ${YELLOW}${HOME}/.config/soul-memory/auto-trigger.conf${NC}"
     echo ""
     echo -e "${GREEN}📚 文檔:${NC}"
@@ -362,13 +452,14 @@ main() {
     fi
     
     setup_auto_trigger
+    setup_heartbeat_auto_save
     setup_environment
     create_trigger_daemon
     verify_installation
     
     print_summary
     
-    print_success "Soul Memory System v2.1 安裝完成！"
+    print_success "Soul Memory System v3.1.1 安裝完成！"
 }
 
 main "$@"
