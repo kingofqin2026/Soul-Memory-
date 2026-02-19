@@ -44,7 +44,7 @@ class VectorSearch:
     - Local keyword-based semantic search
     """
     
-    VERSION = "2.2.0"
+    VERSION = "2.3.0"
     
     # CJK Unicode ranges
     CJK_RANGES = [
