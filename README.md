@@ -1,12 +1,12 @@
 <div align="center">
 
-# 🧠 Soul Memory System v3.1.0
+# 🧠 Soul Memory System v3.1.1
 
 ### Intelligent Memory Management System
 
 **Long-term memory framework for AI Agents**
 
-**🆕 v3.1.0 - 廣東話語法分支 | Cantonese Grammar Branch**
+**🆕 v3.1.1 - Hotfix: Dual-Track Memory Persistence | 雙軌記憶持久化**
 
 [![Python 3.7+](https://img.shields.io/badge/python-3.7%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
@@ -231,11 +231,36 @@ python3 test_all_modules.py
 
 | Version | Date | Changes |
 |---------|------|---------|
+| **v3.1.1** | 2026-02-19 | **Hotfix**: Dual-track memory persistence (JSON index + daily markdown backup) to prevent OpenClaw session overwrites |
+| **v3.1.0** | 2026-02-18 | **Cantonese Grammar Branch**: 語氣詞分級 + 語境映射 + 粵語檢測 + 表達建議 |
 | **v3.0.0** | 2026-02-18 | **Web UI v1.0**: FastAPI dashboard + real-time stats + task monitoring + CJK + Post-Response |
 | **v2.2.0** | 2026-02-18 | **CJK Intelligent Segmentation** for Chinese/Japanese/Korean, **Post-Response Auto-Save**, bug fixes |
 | **v2.1.0** | 2026-02-17 | Rebranded as Soul Memory, removed sensitive content, technical neutralization, English localization |
 | **v2.0.0** | 2026-02-17 | Self-hosted version with complete independence |
 | **v1.9.1** | 2026-02-17 | Auto-Trigger module added |
+
+---
+
+## 🔧 v3.1.1 Hotfix Details
+
+### Problem
+OpenClaw sessions can overwrite memory files when multiple agents write simultaneously.
+
+### Solution: Dual-Track Persistence
+
+```python
+# Track 1: JSON Index (fast, queryable)
+cache/index.json  # Indexed segments for semantic search
+
+# Track 2: Daily Markdown Backup (append-only, safe)
+memory/YYYY-MM-DD.md  # Daily log with [C]/[I]/[N] tags
+```
+
+**Benefits:**
+- ✅ No overwrites (append-only mode)
+- ✅ Redundancy (dual storage)
+- ✅ Human-readable backup
+- ✅ Automatic daily rotation
 
 ---
 
@@ -249,7 +274,7 @@ MIT License - see [LICENSE](LICENSE) for details
 
 ## 🙏 Acknowledgments
 
-**Soul Memory System v3.0** is a **personal AI assistant memory management tool**, designed for personal use.
+**Soul Memory System v3.1** is a **personal AI assistant memory management tool**, designed for personal use.
 
 ---
 

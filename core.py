@@ -57,7 +57,7 @@ class SoulMemorySystem:
     - Cantonese (廣東話) Grammar Branch v3.1.0
     """
     
-    VERSION = "3.1.0"
+    VERSION = "3.1.1"
     
     def __init__(self, base_path: Optional[str] = None):
         """Initialize memory system"""
