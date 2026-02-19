@@ -203,7 +203,50 @@ setup_heartbeat_auto_save() {
     if [ -f "$HEARTBEAT_FILE" ] && grep -q "v3.1.1" "$HEARTBEAT_FILE"; then
         print_success "Heartbeat v3.1.1 配置已存在"
     else
-        print_warning "Heartbeat 配置需要手動更新或已自動更新"
+        print_step "自動更新 HEARTBEAT.md..."
+        cat > "$HEARTBEAT_FILE" << 'HEARTBEAT'
+# Heartbeat Tasks (丞相職責) v3.1.1
+
+## 🤖 自動執行：Soul Memory Heartbeat 檢查
+
+**每次 Heartbeat 時自動執行以下命令**：
+
+```bash
+python3 /root/.openclaw/workspace/soul-memory/heartbeat-trigger.py
+```
+
+如果輸出 `HEARTBEAT_OK`，則無新記憶需要處理。
+
+---
+
+## Soul Memory 自動記憶系統 v3.1.1
+
+### 🎯 系統架構（Heartbeat + 手動混合 + v3.1.1 自動儲存）
+
+| 機制 | 觸發條件 | 分級 |
+|------|----------|------|
+| **Post-Response Auto-Save** | 每次回應後 | 自動識別優先級 |
+| **Heartbeat 檢查** | 每 30 分鐘左右 | 回顧式保存 |
+| **手動即時保存** | 重要對話後立即 | 主動式保存 |
+
+### 📋 Heartbeat 職責
+
+- [ ] 最近對話回顧（識別定義/資料/配置/搜索結果）
+- [ ] 關鍵記憶保存（[C] 定義 / [I] 資料+配置 / ❌ 指令+問候）
+- [ ] 每日檔案檢查（memory/YYYY-MM-DD.md）
+
+### 🎯 核心原則
+
+> **「檢查 + 手動 + 自動」三層保護**
+
+- ✅ **檢查**：Heartbeat 時執行 heartbeat-trigger.py
+- ✅ **手動**：對話中聽到「記住」，立即保存
+- ✅ **自動**：post_response_trigger() 雙軌保存 (JSON + Markdown)
+- ✅ **防護**：追加模式 (append-only) 防止覆蓋
+
+If nothing needs attention, reply HEARTBEAT_OK.
+HEARTBEAT
+        print_success "HEARTBEAT.md 已自動更新為 v3.1.1"
     fi
     
     # 創建 heartbeat 觸發腳本
