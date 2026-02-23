@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Soul Memory Heartbeat Auto-Save Trigger
-v3.2.2 - 主動提取對話 + 自動保存重要記憶 + 去重機制
+v3.2.4 - 寬鬆識別模式（降低閾值 + 擴展關鍵詞 + 減少排除規則）
 """
 
 import sys
@@ -45,7 +45,7 @@ def get_active_session_id():
         print(f"⚠️ 無法讀取 sessions.json: {e}")
         return None
 
-def read_session_messages(session_id, hours=2):
+def read_session_messages(session_id, hours=1):
     """讀取 session 對話內容（最近 N 小時）"""
     session_file = SESSIONS_DIR / f"{session_id}.jsonl"
     
@@ -112,59 +112,61 @@ def read_session_messages(session_id, hours=2):
     return messages
 
 def identify_important_content(messages):
-    """識別重要內容"""
+    """識別重要內容（寬鬆模式 v3.2.4）"""
     important = []
     
     for msg in messages:
         content = msg['content']
         
-        # 排除內容
-        # 1. 太短
-        if len(content) < 50:
+        # 排除內容（寬鬆版本）
+        # 1. 太短（降低閾值）
+        if len(content) < 30:
             continue
         
-        # 2. 系統指令
+        # 2. 系統指令（僅排除 HEARTBEAT.md）
         if 'HEARTBEAT.md' in content or 'Read HEARTBEAT.md' in content:
             continue
         
-        # 3. 標準指令模式
-        if content.startswith('[') and ']' in content and len(content) < 200:
-            continue
-        
-        # 識別重要內容（啟發式規則）
+        # 識別重要內容（寬鬆啟發式規則）
         importance_score = 0
         priority = 'N'  # 默認 Normal
         
-        # 長文本內容 (> 200 字)
-        if len(content) > 200:
-            importance_score += 3
-            priority = 'I'
+        # 長文本內容（降低閾值 > 100 字）
+        if len(content) > 100:
+            importance_score += 2
+            if len(content) > 200:
+                priority = 'I'
         
-        # 包含專有名詞或主題詞
+        # 包含專有名詞或主題詞（擴展列表）
         topic_keywords = [
             '劇情', '故事', '設定', '歷史', 'QST', '物理', '公式',
-            '配置', '安裝', 'API', 'Token', '密鑰',
-            '秦王', '陛下', '臣', '記住', '重要'
+            '配置', '安裝', 'API', 'Token', '密鑰', 'SSH', 'VPS',
+            '秦王', '陛下', '臣', '記住', '重要', '備份', '連接',
+            '問題', '解決', '完成', '成功', '失敗', '錯誤',
+            '網絡', '防火牆', '封禁', '登錄', '密碼',
+            'GitHub', '倉庫', '推送到', '提交', '版本',
+            'OpenClaw', 'Heartbeat', '記憶', '系統',
+            '任務', '命令', '執行', '重啟', '配置'
         ]
         
         for keyword in topic_keywords:
             if keyword in content:
-                importance_score += 2
-                if keyword in ['重要', 'QST', '物理', '公式', '配置', '安裝', 'Token', '密鑰']:
-                    priority = 'C'
+                importance_score += 1
+                if keyword in ['重要', 'QST', '物理', '公式', '配置', '安裝', 'Token', '密鑰', '備份', 'GitHub', 'SSH', 'VPS']:
+                    priority = 'C' if importance_score < 3 else priority
                 break
         
-        # 定義、說明模式
-        if re.search(r'是.*的|定義|屬於|包括', content):
+        # 定義、說明模式（擴展）
+        if re.search(r'是.*的|定義|屬於|包括|原理|方式|方法|步驟|設置', content):
             importance_score += 1
         
         # 劇情/故事模式
-        if re.search(r'第.\集|情節|角色|劇中', content):
-            importance_score += 2
+        if re.search(r'第.\集|情節|角色|劇中|主角|劇情', content):
+            importance_score += 1
             priority = 'I'
         
-        # AI 回應內容
-        if msg['role'] == 'assistant' and importance_score >= 2:
+        # AI 回應內容（降低閾值 >= 1）
+        if msg['role'] == 'assistant' and importance_score >= 1:
             important.append({
                 'time': msg['time'],
                 'content': content,
@@ -283,8 +285,8 @@ def main():
     else:
         print(f"📋 當前 Session: {session_id[:8]}...")
 
-        # 讀取最近 2 小時的對話
-        messages = read_session_messages(session_id, hours=2)
+        # 讀取最近 1 小時的對話
+        messages = read_session_messages(session_id, hours=1)
         print(f"📝 找到 {len(messages)} 條 recent 消息")
 
         # 識別重要內容
