@@ -12,7 +12,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![CJK Support](https://img.shields.io/badge/CJK-%E4%B8%AD%E6%97%A5%E9%9F%93-red.svg)]()
 [![Cantonese](https://img.shields.io/badge/粵語-支援-orange.svg)]()
-[![OpenClaw](https://img.shields.io/badge/OpenClaw-Plugin-v0.1.0_beta-blue.svg)]()
+[![OpenClaw](https://img.shields.io/badge/OpenClaw-Plugin-v0.2.1_beta-blue.svg)]()
 
 </div>
 
@@ -360,6 +360,7 @@ python3 test_all_modules.py
 
 | Version | Date | Changes |
 |---------|------|---------|
+| **Plugin v0.2.1-beta** | 2026-02-25 | **prependContext 累積修復**：從 `event.prompt` 提取查詢，增強遺留格式清理 |
 | **v3.2.2** | 2026-02-23 | **Heartbeat 去重機制** + **寬鬆模式** + **CLI 接口** + **OpenClaw Plugin v0.1.0 beta** |
 | **v3.2.1** | 2026-02-19 | **索引策略改進**：Markdown 區塊級索引，減少 93% Token 消耗 |
 | **v3.2.0** | 2026-02-19 | **Heartbeat 主動提取** + **寬鬆模式**（降低識別閾值） |
