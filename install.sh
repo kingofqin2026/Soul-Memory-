@@ -90,8 +90,15 @@ check_openclaw() {
 }
 
 parse_arguments() {
+    CLEAN_INSTALL=false
+
     while [[ $# -gt 0 ]]; do
         case $1 in
+            --clean)
+                CLEAN_INSTALL=true
+                print_warning "清理模式：將先執行卸載"
+                shift
+                ;;
             --dev)
                 DEV_MODE=true
                 print_warning "開發模式已啟用"
@@ -654,6 +661,19 @@ main() {
     print_header
 
     parse_arguments "$@"
+
+    # 清理模式：先卸載再安裝
+    if [ "$CLEAN_INSTALL" = true ]; then
+        print_warning "執行清理安裝..."
+        if [ -f "${INSTALL_PATH}/uninstall.sh" ]; then
+            bash "${INSTALL_PATH}/uninstall.sh" --backup --confirm || {
+                print_warning "卸載失敗，繼續安裝..."
+            }
+        else
+            print_warning "未找到 uninstall.sh，跳過卸載"
+        fi
+        echo ""
+    fi
 
     check_python
     check_git

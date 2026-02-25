@@ -373,6 +373,48 @@ python3 test_all_modules.py
 
 ---
 
+## 🔧 安裝與卸載
+
+### 安裝
+
+```bash
+# 執行安裝腳本
+bash install.sh
+
+# 設置自動觸發（可選）
+python3 heartbeat-trigger.py
+```
+
+### 卸載
+
+\>\> **卸載腳本可以完全清除 Soul Memory 的所有集成配置**
+
+\>\> 使用方法：
+
+\>\> \`\`\`bash
+\>\> \# 基本卸載（會提示確認）
+\>\> bash uninstall.sh
+\>\>
+\>\> \# 創建備份後卸載（推薦）
+\>\> bash uninstall.sh --backup
+\>\>
+\>\> \# 自動確認（無需手動確認）
+\>\> bash uninstall.sh --backup --confirm
+\>\> \`\`\`
+
+\>\> **卸載項目**：
+\>\> 1. 移除 OpenClaw Plugin 配置（`~/.openclaw/openclaw.json`）
+\>\> 2. 禁用 Heartbeat 自動觸發（`HEARTBEAT.md`）
+\>\> 3. 禁用自動記憶注入（Plugin）
+\>\> 4. 禁用自動記憶保存（Post-Response Auto-Save）
+
+\>\> **恢復配置**：
+\>\> 卸載腳本會在 `~/workspace/soul-memory-backup/YYYYMMDD-HHMMSS/` 創建備份，包含：
+\>\> - `openclaw.json.backup`：原始配置
+\>\> - `HEARTBEAT.md.backup`：原始 Heartbeat 文件
+
+---
+
 ## 🔧 OpenClaw Plugin 使用
 
 ### 安裝配置
