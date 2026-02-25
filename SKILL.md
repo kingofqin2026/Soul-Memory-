@@ -1,98 +1,193 @@
 ---
 name: soul-memory
-version: 2.1.0
-description: Personal AI Memory Management System - 6 modules for priority parsing, vector search, dynamic classification, version control, memory decay, and auto-trigger.
+version: 3.2.2
+description: Intelligent memory management system for AI agents - 8 modules + OpenClaw Plugin integration, with heartbeat deduplication, CLI interface, and full CJK support.
 license: MIT
 author: kingofqin2026
 homepage: https://github.com/kingofqin2026/Soul-Memory-
+repository: https://github.com/kingofqin2026/Soul-Memory-
 keywords:
   - memory
   - ai
   - assistant
   - vector-search
-  - classification
-  - version-control
-  - auto-trigger
-  - personal-ai
+  - openclaw
+  - plugin
+  - heartbeat
+  - cli
+  - cjk
+  - cantonese
 tags:
   - Productivity
   - AI
   - Utilities
+  - Developer-Tools
 ---
 
-# Soul Memory System v2.1
+# Soul Memory System v3.2.2
 
-## 🧠 智能記憶管理系統
+## 🧠 Intelligent Memory Management System
 
-專為 AI Agent 設計的長期記憶框架，包含 6 大功能模組。
+Long-term memory framework for AI agents with full OpenClaw integration. Now with v3.2.2 - **Heartbeat deduplication + OpenClaw Plugin v0.2.1-beta**.
 
-## ✨ 特性
+---
 
-### 模組系統
+## ✨ Features
 
-| 模組 | 功能 | 說明 |
-|------|------|------|
-| **A: 優先級解析器** | Priority Parser | [C]/[I]/[N] 標籤解析 + 語義自動識別 |
-| **B: 向量搜索** | Vector Search | 關鍵詞索引 + 語義擴展搜索（本地） |
-| **C: 動態分類** | Dynamic Classifier | 自動學習類別 |
-| **D: 版本控制** | Version Control | Git 整合 + 版本回滾 |
-| **E: 記憶衰減** | Memory Decay | 時間衰減 + 清理建議 |
-| **F: 自動觸發** | Auto-Trigger | 回答前自動搜索記憶 |
+**8 Powerful Modules + OpenClaw Plugin Integration**
 
-### 核心優勢
+| Module | Function | Description |
+|:-------:|:---------:|:------------|
+| **A** | Priority Parser | `[C]/[I]/[N]` tag parsing + semantic auto-detection |
+| **B** | Vector Search | Keyword indexing + CJK segmentation + semantic expansion |
+| **C** | Dynamic Classifier | Auto-learn categories from memory |
+| **D** | Version Control | Git integration + version rollback |
+| **E** | Memory Decay | Time-based decay + cleanup suggestions |
+| **F** | Auto-Trigger | Pre-response search + Post-response auto-save |
+| **G** | **Cantonese Branch** | 🆕 語氣詞分級 + 語境映射 + 粵語檢測 |
+| **H** | **CLI Interface** | 🆕 Pure JSON output for external integration |
+| **Plugin** | **OpenClaw Hook** | 🆕 `before_prompt_build` Hook for automatic context injection |
+| **Web** | Web UI | FastAPI dashboard with real-time stats |
 
-- ✅ **完全本地化** - 無外部 API 調用
-- ✅ **純 Python** - 無第三方依賴
-- ✅ **深度語義理解** - 自身 LLM 算力
-- ✅ **自動分類** - 動態學習記憶類別
-- ✅ **版本控制** - Git 整合保護數據
-- ✅ **智能衰減** - 自動清理過期記憶
+---
 
-## 🚀 快速開始
+## 🆕 v3.2.2 Release Highlights
 
-### 安裝
+### 🎯 Core Improvements
+
+| Feature | Description |
+|---------|-------------|
+| **Heartbeat Deduplication** | MD5 hash tracking, automatically skips duplicate content |
+| **CLI Interface** | Pure JSON output for external system integration |
+| **OpenClaw Plugin** | Automatically injects relevant memories before responses (v0.2.1-beta) |
+| **Lenient Mode** | Lower recognition thresholds, saves more conversation content |
+
+### 🔄 Plugin v0.2.1-beta Fixes
+
+- **Fix prependContext Accumulation**: Extracts query from `event.prompt` instead of messages history
+- **Enhanced Legacy Cleanup**: Multiple format support (SoulM markers, numbered entries, ## Memory Context)
+- **No Memory Loop**: Prevents recursive injection in conversation history
+
+---
+
+## 🚀 Quick Start
+
+### Installation
 
 ```bash
+# Clone and install
+git clone https://github.com/kingofqin2026/Soul-Memory-.git
+cd Soul-Memory-
 bash install.sh
+
+# Clean install (uninstall first if needed)
+bash install.sh --clean
 ```
 
-### 使用
+### Basic Usage
 
 ```python
-from core import SoulMemorySystem
+from soul_memory.core import SoulMemorySystem
 
-# 初始化系統
+# Initialize system
 system = SoulMemorySystem()
 system.initialize()
 
-# 搜索記憶
+# Search memories
 results = system.search("user preferences", top_k=5)
 
-# 添加記憶
+# Add memory
 memory_id = system.add_memory("[C] User likes dark mode")
 
-# 自動觸發（回答前）
+# Pre-response trigger (auto-search before answering)
 context = system.pre_response_trigger("What are user preferences?")
 ```
 
-## 📋 功能詳解
+### CLI Usage
 
-### 優先級系統
+```bash
+# Pure JSON output
+python3 cli.py search "QST physics" --format json
 
-- **[C] Critical**: 關鍵信息，必須記住
-- **[I] Important**: 重要項目，需要關注
-- **[N] Normal**: 日常閒聊，可衰減
+# Get stats
+python3 cli.py stats --format json
+```
 
-### 關鍵詞搜索
+### OpenClaw Plugin
 
-本地化實現：
-- 關鍵詞索引
-- 同義詞擴展
-- 相似度評分
+```bash
+# Plugin is automatically installed to ~/.openclaw/extensions/soul-memory
 
-### 分類系統
+# Restart Gateway to enable
+openclaw gateway restart
+```
 
-默認分類（可自定義）：
+---
+
+## 🤖 OpenClaw Plugin Integration
+
+### How It Works
+
+**Automatic Trigger**: Executes before each response
+
+1. Extract user query from `event.prompt` (current input, not history)
+2. Search relevant memories (top_k = 5)
+3. Format memory context
+4. Inject into prompt via `prependContext`
+
+### Configuration
+
+Edit `~/.openclaw/openclaw.json`:
+
+```json
+{
+  "plugins": {
+    "entries": {
+      "soul-memory": {
+        "enabled": true,
+        "config": {
+          "topK": 5,
+          "minScore": 0.0
+        }
+      }
+    }
+  }
+}
+```
+
+---
+
+## 🧪 Testing
+
+```bash
+# Run full test suite
+python3 test_all_modules.py
+
+# Expected output:
+# 📊 Results: 8 passed, 0 failed
+# ✅ All tests passed!
+```
+
+---
+
+## 📋 Feature Details
+
+### Priority System
+
+- **[C] Critical**: Key information, must remember
+- **[I] Important**: Important items, needs attention
+- **[N] Normal**: Daily chat, can decay
+
+### Keyword Search
+
+Localized implementation:
+- Keyword indexing
+- Synonym expansion
+- Similarity scoring
+
+### Classification System
+
+Default categories (customizable):
 - User_Identity（用戶身份）
 - Tech_Config（技術配置）
 - Project（專案）
@@ -100,73 +195,115 @@ context = system.pre_response_trigger("What are user preferences?")
 - History（歷史）
 - General（一般）
 
-## 🏗️ 架構
+### Cantonese Support
+
+- 語氣詞分級（唔好、好啦、得咩）
+- 語境映射（褒貶情緒識別）
+- 粵語檢測（簡繁轉換支持）
+
+---
+
+## 📦 File Structure
 
 ```
-soul-memory-v2.1/
-├── core.py           # 核心系統
-├── modules/          # 6大功能模組
+soul-memory/
+├── core.py              # Core system
+├── cli.py               # CLI interface
+├── install.sh           # Auto-install script
+├── uninstall.sh         # Complete uninstall script
+├── test_all_modules.py  # Test suite
+├── SKILL.md             # ClawHub manifest (this file)
+├── README.md            # Documentation
+├── modules/             # 6 functional modules
 │   ├── priority_parser.py
 │   ├── vector_search.py
 │   ├── dynamic_classifier.py
 │   ├── version_control.py
 │   ├── memory_decay.py
 │   └── auto_trigger.py
-├── cache/            # 快取目錄（自動生成）
-├── test_all_modules.py  # 測試套件
-├── install.sh        # 自動安裝腳本
-└── README.md         # 文檔
+├── plugin/              # OpenClaw Plugin
+│   ├── index.ts         # Plugin source
+│   └── openclaw.plugin.json
+├── cache/               # Cache directory (auto-generated)
+└── web/                 # Web UI (optional)
 ```
 
-## 🧪 測試
+---
+
+## 🔒 Uninstallation
+
+Complete removal of all integration configs:
 
 ```bash
-python3 test_all_modules.py
+# Basic uninstall (will prompt for confirmation)
+bash uninstall.sh
+
+# Create backup before uninstall (recommended)
+bash uninstall.sh --backup
+
+# Auto-confirm (no manual confirmation)
+bash uninstall.sh --backup --confirm
 ```
 
-預期輸出：
-```
-==================================================
-🧠 Soul Memory System v2.1 - Test Suite
-==================================================
-...
-📊 Results: 7 passed, 0 failed
-==================================================
-✅ All tests passed!
-```
+**Removed Items**:
+1. OpenClaw Plugin config (`~/.openclaw/openclaw.json`)
+2. Heartbeat auto-trigger (`HEARTBEAT.md`)
+3. Auto memory injection (Plugin)
+4. Auto memory save (Post-Response Auto-Save)
 
-## 🔒 隱私與安全
+---
 
-- ✅ 無外部 API 調用
-- ✅ 無雲服務依賴
-- ✅ 跨域隔離，不共享數據
-- ✅ 開源 MIT License
+## 🔒 Privacy & Security
 
-## 📐 技術細節
+- ✅ No external API calls
+- ✅ No cloud dependencies
+- ✅ Cross-domain isolation, no data sharing
+- ✅ Open source MIT License
+- ✅ CJK support (Chinese, Japanese, Korean)
 
-- **Python 版本**: 3.7+
-- **依賴**: 無外部依賴（純 Python 標準庫）
-- **存儲**: 本地 JSON 文件
-- **搜索**: 關鍵詞匹配 + 語義擴展
-- **分類**: 動態學習 + 預設規則
+---
 
-## 📝 版本歷史
+## 📐 Technical Details
 
-- **v2.1.0** (2026-02-17): 重命名為 Soul Memory，移除敏感內容，技術中性化
-- **v2.0.0** (2026-02-17): 自托管版本
-- **v1.9.1**: Auto-Trigger 模組
+- **Python Version**: 3.7+
+- **Dependencies**: None external (pure Python standard library)
+- **Storage**: Local JSON files
+- **Search**: Keyword matching + semantic expansion
+- **Classification**: Dynamic learning + preset rules
+- **OpenClaw**: Plugin v0.2.1-beta (TypeScript)
 
-## 📄 授權
+---
 
-MIT License - 詳見 LICENSE
+## 📝 Version History
 
-## 🙏 鳴謝
+- **v3.2.2** (2026-02-25): Heartbeat deduplication + OpenClaw Plugin v0.2.1-beta + Uninstall script
+- **v3.2.1** (2026-02-19): Index strategy improvement - 93% Token reduction
+- **v3.2.0** (2026-02-19): Heartbeat active extraction + Lenient mode
+- **v3.1.1** (2026-02-19): Hotfix: Dual-track memory persistence
+- **v3.1.0** (2026-02-18): Cantonese grammar branch: Particle grading + context mapping
+- **v3.0.0** (2026-02-18): Web UI v1.0: FastAPI dashboard + real-time stats
+- **v2.2.0** (2026-02-18): CJK smart segmentation + Post-Response Auto-Save
+- **v2.1.0** (2026-02-17): Rebrand to Soul Memory, technical neutralization
+- **v2.0.0** (2026-02-17): Self-hosted version
 
-Soul Memory System v2.1 是一個**個人 AI 助手記憶管理工具**，專為個人使用而設計，非社交媒體操作工具。
+---
 
-## 🔗 相關連結
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) for details
+
+---
+
+## 🙏 Acknowledgments
+
+**Soul Memory System v3.2** is a **personal AI assistant memory management tool**, designed for personal use. Not affiliated with OpenClaw project.
+
+---
+
+## 🔗 Related Links
 
 - **GitHub**: https://github.com/kingofqin2026/Soul-Memory-
+- **Documentation**: https://github.com/kingofqin2026/Soul-Memory-/blob/main/README.md
 - **Web**: https://qsttheory.com/
 
 ---
