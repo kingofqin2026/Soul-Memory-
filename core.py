@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-Soul Memory System v3.1 - Core Orchestrator
-智能記憶管理系統核心 + 廣東話語法分支
+Soul Memory System v3.3 - Core Orchestrator
+智能記憶管理系統核心 + 三層關鍵詞 + 語意去重 + 多標籤索引
 
 Author: Li Si (李斯)
-Date: 2026-02-18
+Date: 2026-02-26
 
-v3.1.0 - Added Cantonese (廣東話) Grammar Branch
+v3.3.0 - 分層關鍵詞字典 + 語意相似度去重 + 多標籤索引系統
 """
 
 import os
@@ -55,9 +55,12 @@ class SoulMemorySystem:
     - Memory decay & cleanup
     - Pre-response auto-trigger
     - Cantonese (廣東話) Grammar Branch v3.1.0
+    - Keyword Mapping v3.3 (分層權重系統)
+    - Semantic Dedup v3.3 (語意相似度去重)
+    - Multi-Tag Index v3.3 (多標籤索引)
     """
-    
-    VERSION = "3.2.2"
+
+    VERSION = "3.3.0"
     
     def __init__(self, base_path: Optional[str] = None):
         """Initialize memory system"""

@@ -1,12 +1,12 @@
 <div align="center">
 
-# 🧠 Soul Memory System v3.2.2
+# 🧠 Soul Memory System v3.3
 
 ### Intelligent Memory Management System
 
 **Long-term memory framework for AI Agents**
 
-**🆕 v3.2.2 - Heartbeat 去重機制 + OpenClaw Plugin 集成**
+**🆕 v3.3 - 分層關鍵詞字典 + 語意相似度去重 + 多標籤索引**
 
 [![Python 3.7+](https://img.shields.io/badge/python-3.7%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
@@ -37,7 +37,7 @@ Eight powerful modules for complete memory management - **Now with OpenClaw Plug
 
 ---
 
-## 🆕 v3.2.2 Release Highlights
+## 🆕 v3.3 Release Highlights
 
 ### 🎯 核心改進
 
@@ -144,9 +144,9 @@ bash install.sh
 ```
 
 **完整安裝包含**：
-- ✅ Soul Memory v3.2.2 核心系統
+- ✅ Soul Memory v3.3 核心系統
 - ✅ CLI 接口（純 JSON 輸出）
-- ✅ Heartbeat v3.2.2 配置
+- ✅ Heartbeat v3.3 配置
 - ✅ OpenClaw Plugin（v0.1.0 beta）
 
 ### 選項安裝
@@ -223,7 +223,7 @@ python3 heartbeat-trigger.py
 
 **輸出示例**：
 ```
-🧠 初始化 Soul Memory System v3.2.2...
+🧠 初始化 Soul Memory System v3.3...
 ✅ 記憶系統就緒
 
 🩺 Heartbeat 記憶檢查 (2026-02-23 20:20:06 UTC)
@@ -277,7 +277,7 @@ soul-memory-v3.2/
 │
 ├── core.py                    # 核心系統編排器
 ├── cli.py                     # CLI 接口（純 JSON 輸出）
-├── heartbeat-trigger.py       # Heartbeat 自動提取 v3.2.2
+├── heartbeat-trigger.py       # Heartbeat 自動提取 v3.3
 ├── dedup_hashes.json          # MD5 哈希追蹤（去重）
 ├── modules/                   # 功能模塊
 │   ├── priority_parser.py    # [A] 優先級解析器
@@ -294,7 +294,7 @@ soul-memory-v3.2/
 │       ├── openclaw.plugin.json
 │       └── package.json
 ├── test_all_modules.py       # 完整測試套件
-└── install.sh                 # 安裝腳本 v3.2.2
+└── install.sh                 # 安裝腳本 v3.3
 ```
 
 ---
@@ -337,7 +337,7 @@ python3 test_all_modules.py
 
 ```
 ==================================================
-🧠 Soul Memory System v3.2.2 - Test Suite
+🧠 Soul Memory System v3.3 - Test Suite
 ==================================================
 
 📦 Testing Module A: Priority Parser...
@@ -361,7 +361,7 @@ python3 test_all_modules.py
 | Version | Date | Changes |
 |---------|------|---------|
 | **Plugin v0.2.1-beta** | 2026-02-25 | **prependContext 累積修復**：從 `event.prompt` 提取查詢，增強遺留格式清理 |
-| **v3.2.2** | 2026-02-23 | **Heartbeat 去重機制** + **寬鬆模式** + **CLI 接口** + **OpenClaw Plugin v0.1.0 beta** |
+| **v3.3** | 2026-02-23 | **Heartbeat 去重機制** + **寬鬆模式** + **CLI 接口** + **OpenClaw Plugin v0.1.0 beta** |
 | **v3.2.1** | 2026-02-19 | **索引策略改進**：Markdown 區塊級索引，減少 93% Token 消耗 |
 | **v3.2.0** | 2026-02-19 | **Heartbeat 主動提取** + **寬鬆模式**（降低識別閾值） |
 | **v3.1.1** | 2026-02-19 | **Hotfix**: 雙軌記憶持久化防止 OpenClaw 會話覆蓋 |
