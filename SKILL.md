@@ -1,7 +1,7 @@
 ---
 name: soul-memory
-version: 3.3.0
-description: Intelligent memory management system for AI agents - 8 modules + OpenClaw Plugin, with hierarchical keyword mapping, semantic deduplication, multi-tag indexing, and full CJK support.
+version: 3.3.1
+description: Intelligent memory management system for AI agents - 8 modules + OpenClaw Plugin, with automatic Heartbeat cleanup, hierarchical keyword mapping, semantic deduplication, multi-tag indexing, and full CJK support.
 license: MIT
 author: kingofqin2026
 homepage: https://github.com/kingofqin2026/Soul-Memory-
@@ -27,11 +27,11 @@ tags:
   - Developer-Tools
 ---
 
-# Soul Memory System v3.3
+# Soul Memory System v3.3.1
 
 ## 🧠 Intelligent Memory Management System
 
-Long-term memory framework for AI agents with full OpenClaw integration. Now with v3.3 - **Heartbeat deduplication + OpenClaw Plugin v0.2.1-beta**.
+Long-term memory framework for AI agents with full OpenClaw integration. Now with v3.3.1 - **Heartbeat 自動清理 + Cron Job 集成**.
 
 ---
 
@@ -54,7 +54,18 @@ Long-term memory framework for AI agents with full OpenClaw integration. Now wit
 
 ---
 
-## 🆕 v3.2.2 Release Highlights
+## 🆕 v3.3.1 Release Highlights
+
+### 🎯 Heartbeat 自動清理（最新！）
+
+| Feature | Description |
+|---------|-------------|
+| **Auto Cleanup Script** | Automatically cleans Heartbeat reports every 3 hours |
+| **Cron Job Integration** | OpenClaw Cron system scheduled execution |
+| **Multi-format Support** | Recognizes multiple Heartbeat formats |
+| **Memory Optimization** | Reduces redundancy, improves quality score (7.9 → 8.5) |
+
+### v3.2.2 Release Highlights
 
 ### 🎯 Core Improvements
 
@@ -279,6 +290,7 @@ bash uninstall.sh --backup --confirm
 
 ## 📝 Version History
 
+- **v3.3.1** (2026-02-27): 🆕 Heartbeat 自動清理 + Cron Job 集成 + 記憶質量優化（7.9→8.5）
 - **v3.2.2** (2026-02-25): Heartbeat deduplication + OpenClaw Plugin v0.2.1-beta + Uninstall script
 - **v3.2.1** (2026-02-19): Index strategy improvement - 93% Token reduction
 - **v3.2.0** (2026-02-19): Heartbeat active extraction + Lenient mode
