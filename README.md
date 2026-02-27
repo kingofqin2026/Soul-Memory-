@@ -1,12 +1,12 @@
 <div align="center">
 
-# 🧠 Soul Memory System v3.3
+# 🧠 Soul Memory System v3.3.1
 
 ### Intelligent Memory Management System
 
 **Long-term memory framework for AI Agents**
 
-**🆕 v3.3 - 分層關鍵詞字典 + 語意相似度去重 + 多標籤索引**
+**🆕 v3.3.1 - Heartbeat 自動清理 + Cron Job 集成**
 
 [![Python 3.7+](https://img.shields.io/badge/python-3.7%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
@@ -37,7 +37,18 @@ Eight powerful modules for complete memory management - **Now with OpenClaw Plug
 
 ---
 
-## 🆕 v3.3 Release Highlights
+## 🆕 v3.3.1 Release Highlights
+
+### 🎯 Heartbeat 自動清理（最新！）
+
+| 功能 | 說明 |
+|------|------|
+| **自動清理腳本** | 每 3 小時自動清理 Heartbeat 報告 |
+| **Cron Job 集成** | OpenClaw Cron 系統排程執行 |
+| **多格式支援** | 支持多種 Heartbeat 格式識別 |
+| **記憶優化** | 減少冗餘，提高質量評分（7.9 → 8.5） |
+
+### v3.3 核心改進
 
 ### 🎯 核心改進
 
@@ -360,7 +371,7 @@ python3 test_all_modules.py
 
 | Version | Date | Changes |
 |---------|------|---------|
-| **Plugin v0.2.1-beta** | 2026-02-25 | **prependContext 累積修復**：從 `event.prompt` 提取查詢，增強遺留格式清理 |
+| **v3.3.1** | 2026-02-27 | 🆕 **Heartbeat 自動清理** + Cron Job 集成 + 記憶質量優化（7.9→8.5） |
 | **v3.3** | 2026-02-23 | **Heartbeat 去重機制** + **寬鬆模式** + **CLI 接口** + **OpenClaw Plugin v0.1.0 beta** |
 | **v3.2.1** | 2026-02-19 | **索引策略改進**：Markdown 區塊級索引，減少 93% Token 消耗 |
 | **v3.2.0** | 2026-02-19 | **Heartbeat 主動提取** + **寬鬆模式**（降低識別閾值） |
