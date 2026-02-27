@@ -6,7 +6,7 @@ Soul Memory System v3.3 - Core Orchestrator
 Author: Li Si (李斯)
 Date: 2026-02-26
 
-v3.3.0 - 分層關鍵詞字典 + 語意相似度去重 + 多標籤索引系統
+v3.3.1 - Heartbeat 自動清理 + Cron Job 集成
 """
 
 import os
