@@ -17,6 +17,8 @@ let state = {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🧠 Soul Memory Web UI initialized');
     loadStats();
+    loadCleanupMetrics();
+    loadFileMetrics();
     refreshTasks();
     updateTimestamp();
     
@@ -27,6 +29,8 @@ document.addEventListener('DOMContentLoaded', () => {
     
     setInterval(() => {
         loadStats();
+        loadCleanupMetrics();
+        loadFileMetrics();
         updateTimestamp();
     }, 30000);
 });

@@ -361,3 +361,35 @@ body {
         grid-template-columns: repeat(3, 1fr);
     }
 }
+
+
+.search-box select {
+    padding: 10px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    background: white;
+}
+
+.mini-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.mini-card {
+    background: var(--bg-light);
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+}
+
+.mini-value {
+    font-size: 1.1em;
+    font-weight: 700;
+    color: var(--bg-dark);
+}
+
+.mini-label {
+    font-size: 0.75em;
+    color: var(--text-light);
+}

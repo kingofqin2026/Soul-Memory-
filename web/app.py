@@ -116,6 +116,63 @@ async def health():
 
 
 
+
+
+def _memory_dir() -> Path:
+    return Path.home() / ".openclaw" / "workspace" / "memory"
+
+@app.get("/api/metrics/files")
+async def file_metrics():
+    """Current memory file size/line metrics (today and latest)"""
+    mdir = _memory_dir()
+    today = datetime.now().strftime('%Y-%m-%d')
+    candidates = sorted(mdir.glob(f"{today}*.md")) if mdir.exists() else []
+
+    def info(path: Path):
+        txt = path.read_text(encoding='utf-8') if path.exists() else ''
+        return {
+            "name": path.name,
+            "bytes": path.stat().st_size,
+            "lines": txt.count('\n') + (1 if txt else 0)
+        }
+
+    today_files = [info(p) for p in candidates]
+    latest = None
+    if mdir.exists():
+        all_md = sorted(mdir.glob('*.md'))
+        if all_md:
+            latest = info(all_md[-1])
+
+    return {
+        "today": today,
+        "today_files": today_files,
+        "latest_file": latest,
+        "limits": {"max_lines": 500, "max_bytes": 51200},
+        "timestamp": datetime.now().isoformat()
+    }
+
+@app.get("/api/metrics/cleanup")
+async def cleanup_metrics():
+    """Estimate cleanup state from memory files"""
+    mdir = _memory_dir()
+    heartbeat_like = 0
+    files_scanned = 0
+    if mdir.exists():
+        for f in mdir.glob('*.md'):
+            files_scanned += 1
+            try:
+                txt = f.read_text(encoding='utf-8')
+                heartbeat_like += txt.lower().count('heartbeat')
+            except Exception:
+                pass
+
+    return {
+        "files_scanned": files_scanned,
+        "heartbeat_mentions": heartbeat_like,
+        "status": "clean" if heartbeat_like < 10 else "needs-attention",
+        "timestamp": datetime.now().isoformat()
+    }
+
 @app.get("/api/stats")
 async def get_stats():
     """Get system statistics"""
