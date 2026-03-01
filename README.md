@@ -482,12 +482,12 @@ MIT License - see [LICENSE](LICENSE) for details
 
 ## 🙏 Acknowledgments
 
-**Soul Memory System v3.2** is a **personal AI assistant memory management tool**, designed for personal use.
+**Soul Memory System v3.3.1** is a **personal AI assistant memory management tool**, designed for personal use.
 
 ---
 
 made with ❤️ by **kingofqin2026**
 
-[⬆ Back to Top](#-soul-memory-system-v32)
+[⬆ Back to Top](#-soul-memory-system-v331)
 
 </div>
