@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Soul Memory Heartbeat Cleanup Script
-每3小時自動執行，移除 Heartbeat 相關記憶以減少冗餘
+每3小時自動執行，作為保底清理（主流程以前置過濾為主）
 Compatible with Soul Memory v3.3.1
 """
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Soul Memory Heartbeat Auto-Save Trigger
-v3.2.4 - 寬鬆識別模式（降低閾值 + 擴展關鍵詞 + 減少排除規則）
+v3.3.2 - 前置過濾 + 檔案滾動 + 內容摘要 + 模板去重
 """
 
 import sys
@@ -165,8 +165,8 @@ def identify_important_content(messages):
             importance_score += 1
             priority = 'I'
         
-        # AI 回應內容（降低閾值 >= 1）
-        if msg['role'] == 'assistant' and importance_score >= 1:
+        # AI 回應內容（v3.3.2：提高門檻 >= 2）
+        if msg['role'] == 'assistant' and importance_score >= 2:
             important.append({
                 'time': msg['time'],
                 'content': content,
@@ -174,6 +174,68 @@ def identify_important_content(messages):
             })
     
     return important
+
+def should_skip_content(content):
+    """前置過濾：跳過 Heartbeat 模板化/系統性內容"""
+    skip_patterns = [
+        r'Heartbeat 報告',
+        r'來源[：:]\s*Session 對話回顧',
+        r'分析消息數',
+        r'識別重要內容',
+        r'保存位置',
+        r'今日總計.*條記憶',
+        r'System v\d+\.\d+\.\d+\s*運作分析報告'
+    ]
+    return any(re.search(p, content, re.IGNORECASE) for p in skip_patterns)
+
+def summarize_content(content, max_len=400):
+    """超長內容摘要化：1 行摘要 + 最多 3 條要點"""
+    if len(content) <= max_len:
+        return content
+
+    lines = [ln.strip() for ln in content.splitlines() if ln.strip()]
+    summary_line = lines[0][:80]
+
+    bullets = []
+    for ln in lines[1:]:
+        if len(bullets) >= 3:
+            break
+        if ln.startswith(('-', '•', '*')) or '：' in ln or ':' in ln:
+            bullets.append(ln[:120])
+
+    if not bullets:
+        chunks = re.split(r'[。.!?！？；;]', content)
+        bullets = [c.strip()[:120] for c in chunks if c.strip()][:3]
+
+    out = [f"摘要：{summary_line}"]
+    out.extend([f"- {b}" for b in bullets])
+    out.append(f"(原文長度：{len(content)} 字，已摘要)")
+    return "\n".join(out)
+
+def get_daily_output_file(base_date=None, max_lines=500, max_bytes=50*1024):
+    """按行數/檔案大小滾動 daily file：YYYY-MM-DD[-b|-c].md"""
+    if base_date is None:
+        base_date = datetime.now().strftime('%Y-%m-%d')
+
+    daily_dir = Path.home() / ".openclaw" / "workspace" / "memory"
+    daily_dir.mkdir(parents=True, exist_ok=True)
+
+    suffixes = [''] + [f'-{chr(c)}' for c in range(ord('b'), ord('z')+1)]
+    for s in suffixes:
+        candidate = daily_dir / f"{base_date}{s}.md"
+        if not candidate.exists():
+            return candidate
+
+        try:
+            txt = candidate.read_text(encoding='utf-8')
+            line_count = txt.count('\n') + 1
+            size = candidate.stat().st_size
+            if line_count <= max_lines and size <= max_bytes:
+                return candidate
+        except Exception:
+            return candidate
+
+    return daily_dir / f"{base_date}-overflow.md"
 
 def save_to_daily_file(content, priority):
     """保存到 daily file"""
@@ -199,9 +261,33 @@ def save_to_daily_file(content, priority):
     
     return str(daily_file)
 
+def normalize_for_dedup(content):
+    """內容正規化（模板去重）：移除時間戳、emoji/標頭、固定模板欄位"""
+    normalized = content
+    # 移除時間
+    normalized = re.sub(r'\b\d{1,2}:\d{2}(:\d{2})?\b', '', normalized)
+    normalized = re.sub(r'\b\d{4}-\d{2}-\d{2}\b', '', normalized)
+    # 移除常見 emoji 標頭
+    normalized = re.sub(r'^[\s🔥⭐✅📊🩺💾📈⚠️🎯🏛️✨-]+', '', normalized)
+    # 移除模板欄位
+    for pat in [
+        r'來源[：:].*',
+        r'時區[：:].*',
+        r'分析消息數[：:].*',
+        r'識別重要內容[：:].*',
+        r'保存位置[：:].*',
+        r'今日總計.*條記憶',
+        r'Heartbeat 時間[：:].*'
+    ]:
+        normalized = re.sub(pat, '', normalized)
+    # 壓縮空白
+    normalized = re.sub(r'\s+', ' ', normalized).strip()
+    return normalized
+
 def get_content_hash(content):
     """計算內容哈希（用於去重）"""
-    return hashlib.md5(content.encode('utf-8')).hexdigest()
+    normalized = normalize_for_dedup(content)
+    return hashlib.md5(normalized.encode('utf-8')).hexdigest()
 
 def get_saved_hashes(today_date=None):
     """獲取已保存的內容哈希"""
@@ -264,7 +350,7 @@ def check_daily_memory():
 
 def main():
     """Heartbeat 檢查點"""
-    print(f"🧠 初始化 Soul Memory System v3.2.2...")
+    print(f"🧠 初始化 Soul Memory System v3.3.2...")
     system = SoulMemorySystem()
     system.initialize()
     print(f"✅ 記憶系統就緒")
