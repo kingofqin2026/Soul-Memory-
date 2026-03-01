@@ -389,6 +389,14 @@ body {
     color: var(--bg-dark);
 }
 
+.mini-value.warn {
+    color: #b7791f;
+}
+
+.mini-value.danger {
+    color: #c53030;
+}
+
 .mini-label {
     font-size: 0.75em;
     color: var(--text-light);

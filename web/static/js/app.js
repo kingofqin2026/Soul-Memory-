@@ -240,3 +240,44 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
+// ============ v3.3.2 Monitoring ============
+async function loadCleanupMetrics() {
+    try {
+        const data = await fetchAPI('/metrics/cleanup');
+        const status = document.getElementById('cleanup-status');
+        const mentions = document.getElementById('heartbeat-mentions');
+        if (status) status.textContent = data.status === 'clean' ? '✅ Clean' : '⚠️ Attention';
+        if (mentions) mentions.textContent = data.heartbeat_mentions ?? '-';
+    } catch (e) {
+        // ignore
+    }
+}
+
+async function loadFileMetrics() {
+    try {
+        const data = await fetchAPI('/metrics/files');
+        const lineEl = document.getElementById('today-lines');
+        const sizeEl = document.getElementById('today-size');
+        const files = data.today_files || [];
+        const lines = files.reduce((a, f) => a + (f.lines || 0), 0);
+        const bytes = files.reduce((a, f) => a + (f.bytes || 0), 0);
+
+        if (lineEl) {
+            lineEl.textContent = lines;
+            lineEl.classList.remove('warn', 'danger');
+            if (lines > 500) lineEl.classList.add('danger');
+            else if (lines > 400) lineEl.classList.add('warn');
+        }
+
+        if (sizeEl) {
+            const kb = bytes / 1024;
+            sizeEl.textContent = kb.toFixed(1);
+            sizeEl.classList.remove('warn', 'danger');
+            if (kb > 50) sizeEl.classList.add('danger');
+            else if (kb > 40) sizeEl.classList.add('warn');
+        }
+    } catch (e) {
+        // ignore
+    }
+}
