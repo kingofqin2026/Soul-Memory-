@@ -1,6 +1,6 @@
 /**
  * Soul Memory Web UI - JavaScript
- * Version 1.0.0
+ * Version 3.3.2
  */
 
 // API Base URL
@@ -129,7 +129,8 @@ async function doSearch() {
     resultsDiv.innerHTML = '<p class="placeholder-text">🔍 Searching...</p>';
     
     try {
-        const data = await fetchAPI(`/search?q=${encodeURIComponent(query)}&top_k=10`);
+        const topK = document.getElementById("top-k")?.value || 10;
+        const data = await fetchAPI(`/search?q=${encodeURIComponent(query)}&top_k=${topK}`);
         state.searchResults = data.results;
         displaySearchResults(data);
     } catch (error) {

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🧠 Soul Memory Web UI</title>
-    <link rel="stylesheet" href="/static/css/style.css?v=3.0.1">
+    <link rel="stylesheet" href="/static/css/style.css?v=3.3.2">
 </head>
 <body>
     <div class="container">
@@ -86,6 +86,11 @@
                 
                 <div class="search-box">
                     <input type="text" id="search-input" placeholder="Search memory..." onkeypress="handleSearchKey(event)">
+                    <select id="top-k" title="top_k">
+                        <option value="5">Top 5</option>
+                        <option value="10" selected>Top 10</option>
+                        <option value="20">Top 20</option>
+                    </select>
                     <button class="btn btn-search" onclick="doSearch()">🔍</button>
                 </div>
 
@@ -110,7 +115,7 @@
 
         <!-- Footer -->
         <footer class="footer">
-            <span>Soul Memory Web UI v1.0</span>
+            <span>Soul Memory Web UI v3.3.2</span>
             <span id="timestamp"></span>
         </footer>
     </div>

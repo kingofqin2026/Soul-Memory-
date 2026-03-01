@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Soul Memory Web UI v1.0
+Soul Memory Web UI v3.3.2
 FastAPI Backend + Dashboard
 Author: Soul Memory System
 Date: 2026-02-18
@@ -29,18 +29,20 @@ from core import SoulMemorySystem
 # Initialize FastAPI
 app = FastAPI(
     title="Soul Memory Web UI",
-    description="Web interface for Soul Memory System v3.0",
-    version="1.0.0"
+    description="Web interface for Soul Memory System v3.3.2",
+    version="3.3.2"
 )
 
 # Mount static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
+BASE_DIR = Path(__file__).parent
+app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 
 # Templates
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 # Global memory system instance
 memory_system = None
+START_TIME = datetime.now()
 
 # ============ Task System ============
 class Task:
@@ -85,7 +87,7 @@ def update_task(task_id: str, status: str = None, progress: int = None, message:
 async def startup_event():
     """Initialize memory system on startup"""
     global memory_system
-    print("🧠 Initializing Soul Memory Web UI...")
+    print("🧠 Initializing Soul Memory Web UI v3.3.2...")
     memory_system = SoulMemorySystem()
     memory_system.initialize()
     print(f"✅ Ready - {memory_system.stats()['total_segments']} segments loaded")
@@ -100,6 +102,19 @@ async def index(request: Request):
     })
 
 # ============ API Endpoints ============
+@app.get("/api/health")
+async def health():
+    """Health check and runtime info"""
+    uptime_sec = int((datetime.now() - START_TIME).total_seconds())
+    return {
+        "ok": memory_system is not None,
+        "service": "soul-memory-webui",
+        "version": "3.3.2",
+        "uptime_seconds": uptime_sec,
+        "timestamp": datetime.now().isoformat()
+    }
+
+
 
 @app.get("/api/stats")
 async def get_stats():
