@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ################################################################################
-# Soul Memory System v3.3 - Installation Script
+# Soul Memory System v3.3.1 - Installation Script
 #
 # 功能：自動安裝 Soul Memory 系統 + OpenClaw Plugin + Heartbeat 自動儲存
 # 用法：bash install.sh [--dev] [--path /custom/path] [--with-plugin] [--rebuild-index]

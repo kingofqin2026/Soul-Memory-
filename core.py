@@ -30,6 +30,8 @@ from modules.version_control import VersionControl
 from modules.memory_decay import MemoryDecay
 from modules.auto_trigger import AutoTrigger, auto_trigger, get_memory_context
 from modules.cantonese_syntax import CantoneseSyntaxBranch, CantoneseAnalysisResult, ToneIntensity, ContextType
+# v3.3.2: Heartbeat 自我報告過濾
+from modules.heartbeat_filter import HeartbeatFilter, should_filter_memory
 
 
 @dataclass
@@ -60,7 +62,7 @@ class SoulMemorySystem:
     - Multi-Tag Index v3.3 (多標籤索引)
     """
 
-    VERSION = "3.3.0"
+    VERSION = "3.3.2"
     
     def __init__(self, base_path: Optional[str] = None):
         """Initialize memory system"""
@@ -78,6 +80,8 @@ class SoulMemorySystem:
         
         # v3.1.0: Cantonese Grammar Branch
         self.cantonese_branch = CantoneseSyntaxBranch()
+        # v3.3.2: Heartbeat 自我報告過濾器
+        self.heartbeat_filter = HeartbeatFilter()
         
         self.indexed = False
     
@@ -170,6 +174,12 @@ class SoulMemorySystem:
         """
         from datetime import datetime
         
+        # ===== v3.3.2: Heartbeat 自我報告過濾 =====
+        should_filter, filter_reason = self.heartbeat_filter.check(user_query, assistant_response)
+        if should_filter:
+            print(f"🚫 Heartbeat self-report filtered: {filter_reason}")
+            return None
+        # ===== End v3.3.2 =====
         # 檢測是否為粵語
         is_canto, canto_conf = self.cantonese_branch.detect_cantonese(assistant_response)
         
