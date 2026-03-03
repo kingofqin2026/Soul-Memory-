@@ -1,12 +1,12 @@
 <div align="center">
 
-# 🧠 Soul Memory System v3.3.1
+# 🧠 Soul Memory System v3.3.2
 
 ### Intelligent Memory Management System
 
 **Long-term memory framework for AI Agents**
 
-**🆕 v3.3.1 - Heartbeat 自動清理 + Cron Job 集成**
+**🆕 v3.3.2 - Heartbeat Cron 優化 (12h) + 自我報告過濾**
 
 [![Python 3.7+](https://img.shields.io/badge/python-3.7%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
@@ -34,6 +34,42 @@ Eight powerful modules for complete memory management - **Now with OpenClaw Plug
 | **H** | **CLI Interface** | 🆕 Pure JSON output for external integration |
 | **Plugin** | **OpenClaw Hook** | 🆕 `before_prompt_build` Hook for automatic context injection |
 | **Web** | Web UI | FastAPI dashboard with real-time stats, search & task monitoring |
+
+---
+
+## 🆕 v3.3.2 Release Highlights
+
+### 🎯 Heartbeat Cron 優化 + 自我報告過濾
+
+| 功能 | 說明 |
+|------|------|
+| **Cron 週期調整** | 每 3 小時 → 每 12 小時，減少不必要的檢查 |
+| **Heartbeat 過濾器** | 新增 `heartbeat_filter.py` 模組，自動識別並過濾自我報告 |
+| **記憶污染防護** | `post_response_trigger` 自動跳過 Heartbeat 相關內容 |
+| **過濾關鍵詞** | 支持 10+ 種 Heartbeat 報告格式識別 |
+
+### 🔧 技術實現
+
+```python
+# Heartbeat 自我報告過濾
+from modules.heartbeat_filter import HeartbeatFilter
+
+filter = HeartbeatFilter()
+should_filter, reason = filter.check(user_query, assistant_response)
+
+if should_filter:
+    print("🚫 Heartbeat self-report filtered")
+    return None  # 不保存到記憶
+```
+
+**過濾規則**：
+- `Heartbeat 自動提取`
+- `Heartbeat 報告`
+- `蒙恬將軍邊防巡查`
+- `記憶斥候回報`
+- `記憶邊防穩固`
+- `Soul Memory Heartbeat 已成功發動`
+- 以及更多...
 
 ---
 
@@ -372,6 +408,7 @@ python3 test_all_modules.py
 | Version | Date | Changes |
 |---------|------|---------|
 | **v3.3.2** | 2026-03-01 | 🆕 前置過濾 + 每日檔案滾動（500行/50KB）+ 400字摘要化 + 模板去重強化 |
+| **v3.3.2** | 2026-03-03 | 🆕 **Heartbeat Cron 優化** (3h→12h) + 自我報告過濾器 + 記憶污染防護 |
 | **v3.3.1** | 2026-02-27 | 🆕 **Heartbeat 自動清理** + Cron Job 集成 + 記憶質量優化（7.9→8.5） |
 | **v3.3** | 2026-02-23 | **Heartbeat 去重機制** + **寬鬆模式** + **CLI 接口** + **OpenClaw Plugin v0.1.0 beta** |
 | **v3.2.1** | 2026-02-19 | **索引策略改進**：Markdown 區塊級索引，減少 93% Token 消耗 |
