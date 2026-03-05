@@ -1,6 +1,6 @@
 ---
 name: soul-memory
-version: 3.3.1
+version: 3.3.3
 description: Intelligent memory management system for AI agents - 8 modules + OpenClaw Plugin, with automatic Heartbeat cleanup, hierarchical keyword mapping, semantic deduplication, multi-tag indexing, and full CJK support.
 license: MIT
 author: kingofqin2026
