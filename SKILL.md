@@ -1,6 +1,6 @@
 ---
 name: soul-memory
-version: 3.3.3
+version: 3.3.4
 description: Intelligent memory management system for AI agents - 8 modules + OpenClaw Plugin, with automatic Heartbeat cleanup, hierarchical keyword mapping, semantic deduplication, multi-tag indexing, and full CJK support.
 license: MIT
 author: kingofqin2026
@@ -27,11 +27,11 @@ tags:
   - Developer-Tools
 ---
 
-# Soul Memory System v3.3.1
+# Soul Memory System v3.3.4
 
 ## 🧠 Intelligent Memory Management System
 
-Long-term memory framework for AI agents with full OpenClaw integration. Now with v3.3.1 - **Heartbeat 自動清理 + Cron Job 集成**.
+Long-term memory framework for AI agents with full OpenClaw integration. Now with v3.3.4 - **查詢過濾優化（跳過問候語/簡單命令，提高搜索閾值）**.
 
 ---
 
@@ -290,6 +290,9 @@ bash uninstall.sh --backup --confirm
 
 ## 📝 Version History
 
+- **v3.3.4** (2026-03-07): 🆕 查詢過濾優化（跳過問候語/簡單命令，提高搜索閾值 minScore 0.0→3.0，節省 ~25k token/日）
+- **v3.3.3** (2026-03-06): 每日快取自動重建（跨日索引更新）
+- **v3.3.2** (2026-02-28): Heartbeat 自我報告過濾
 - **v3.3.1** (2026-02-27): 🆕 Heartbeat 自動清理 + Cron Job 集成 + 記憶質量優化（7.9→8.5）
 - **v3.2.2** (2026-02-25): Heartbeat deduplication + OpenClaw Plugin v0.2.1-beta + Uninstall script
 - **v3.2.1** (2026-02-19): Index strategy improvement - 93% Token reduction
