@@ -159,6 +159,50 @@ function extractQuery(rawMessage: string): string {
 }
 
 /**
+ * Check if query should skip memory search (greetings, simple commands, etc.)
+ * v3.3.4 optimization: Reduce noise from irrelevant memory injections
+ */
+function shouldSkipQuery(query: string): boolean {
+  if (!query || query.trim().length === 0) return true;
+  
+  const normalized = query.toLowerCase().trim();
+  
+  // Greetings (Chinese & English)
+  const greetings = [
+    '早', '早上好', '早安', '早啊', 'good morning',
+    '好', '你好', '您好', 'hello', 'hi', 'hey',
+    '再见', '拜拜', 'bye', 'goodbye', 'see you',
+    '谢谢', '感谢', 'thank', 'thanks', 'thx',
+    '好的', '好滴', 'ok', 'okay', '收到', '嗯', '嗯嗯'
+  ];
+  
+  // Simple commands (1-2 characters, no context needed)
+  const simpleCommands = [
+    '？', '？', '?', '！', '!',
+    '查', '看', '停', '重启', '重启服务',
+    '检查', '测试', '运行', '执行',
+    '继续', '继续做', '好的', '没问题'
+  ];
+  
+  // Check for exact matches
+  if (greetings.includes(normalized) || simpleCommands.includes(normalized)) {
+    return true;
+  }
+  
+  // Check for very short queries (< 3 characters) without technical keywords
+  if (normalized.length < 3 && !/[0-9a-zA-Z\u4e00-\u9fa5]{3,}/.test(normalized)) {
+    return true;
+  }
+  
+  // Check for emoji-only messages
+  if (/^[\p{Emoji}]+$/u.test(normalized)) {
+    return true;
+  }
+  
+  return false;
+}
+
+/**
  * Clean old memory markers from messages array
  * This prevents accumulation of memory context in conversation history
  */
@@ -242,7 +286,7 @@ export default function register(api: any) {
     const config: SoulMemoryConfig = {
       enabled: true,
       topK: 5,
-      minScore: 0.0,
+      minScore: 3.0,  // v3.3.4: Increased from 0.0 to reduce noise
       ...api.config.plugins?.entries?.['soul-memory']?.config
     };
 
@@ -273,6 +317,12 @@ export default function register(api: any) {
 
     // If prompt is empty, try to get from messages as fallback
     let lastUserMessage = userQuery;
+
+    // v3.3.4 optimization: Skip search for greetings and simple commands
+    if (shouldSkipQuery(userQuery)) {
+      logger.debug(`[Soul Memory] Skipping search for simple query: "${userQuery.substring(0, 50)}"`);
+      return {};
+    }
     if (!lastUserMessage || lastUserMessage.length === 0) {
       logger.debug('[Soul Memory] Prompt is empty, falling back to messages');
       const messages = event.messages || [];

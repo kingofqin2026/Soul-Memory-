@@ -95,7 +95,7 @@ Examples:
     search_parser.add_argument('query', help='Search query text')
     search_parser.add_argument('--top_k', type=int, default=5,
                                help='Number of results to return (default: 5)')
-    search_parser.add_argument('--min_score', type=float, default=0.0,
+    search_parser.add_argument('--min_score', type=float, default=3.0,
                                help='Minimum similarity score (default: 0.0)')
     search_parser.set_defaults(func=search_command)
 

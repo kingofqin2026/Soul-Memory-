@@ -9,6 +9,7 @@ Date: 2026-02-26
 v3.3.1 - Heartbeat 自動清理 + Cron Job 集成
 v3.3.2 - Heartbeat 自我報告過濾
 v3.3.3 - 每日快取自動重建（跨日索引更新）
+v3.3.4 - 查詢過濾優化（跳過问候語/簡單命令）
 """
 
 import os
@@ -64,7 +65,7 @@ class SoulMemorySystem:
     - Multi-Tag Index v3.3 (多標籤索引)
     """
 
-    VERSION = "3.3.3"
+    VERSION = "3.3.4"
 
     def __init__(self, base_path: Optional[str] = None):
         """Initialize memory system"""
