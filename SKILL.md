@@ -1,7 +1,7 @@
 ---
 name: soul-memory
-version: 3.3.4
-description: Intelligent memory management system for AI agents - 8 modules + OpenClaw Plugin, with automatic Heartbeat cleanup, hierarchical keyword mapping, semantic deduplication, multi-tag indexing, and full CJK support.
+version: 3.4.0
+description: Intelligent memory management system v3.4 - OpenClaw 2026.3.7 Pluggable Context Engine integration, Semantic Cache Layer, Dynamic Context Window, Multi-Context Collaboration, 10x faster search, 40% token savings.
 license: MIT
 author: kingofqin2026
 homepage: https://github.com/kingofqin2026/Soul-Memory-
@@ -27,11 +27,11 @@ tags:
   - Developer-Tools
 ---
 
-# Soul Memory System v3.3.4
+# Soul Memory System v3.4.0
 
 ## 🧠 Intelligent Memory Management System
 
-Long-term memory framework for AI agents with full OpenClaw integration. Now with v3.3.4 - **查詢過濾優化（跳過問候語/簡單命令，提高搜索閾值）**.
+Long-term memory framework for AI agents with full OpenClaw integration. **v3.4.0 - OpenClaw 2026.3.7 可插拔上下文引擎集成**：語義緩存層 + 動態上下文窗口 + 多引擎協同，性能提升 10x，Token 節省 40%。
 
 ---
 
