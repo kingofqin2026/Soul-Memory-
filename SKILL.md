@@ -1,7 +1,7 @@
 ---
 name: soul-memory
-version: 3.4.0
-description: Intelligent memory management system v3.4 - OpenClaw 2026.3.7 Pluggable Context Engine integration, Semantic Cache Layer, Dynamic Context Window, Multi-Context Collaboration, 10x faster search, 40% token savings.
+version: 3.4.1
+description: Intelligent memory management system v3.4.1 - OpenClaw 2026.3.7 Pluggable Context Engine integration, Semantic Cache Layer, Dynamic Context Window, Multi-Context Collaboration, 10x faster search, 40% token savings. Bugfix: min_score support + CLI dual-format compatibility.
 license: MIT
 author: kingofqin2026
 homepage: https://github.com/kingofqin2026/Soul-Memory-
