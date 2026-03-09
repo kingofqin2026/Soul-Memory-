@@ -50,15 +50,15 @@ def search_command(args: argparse.Namespace) -> None:
         finally:
             sys.stdout = old_stdout
 
-        # Search
+        # Search (v3.4.0 returns list of dicts)
         results = memory_system.search(
             args.query,
-            top_k=args.top_k
+            top_k=args.top_k,
+            min_score=args.min_score  # v3.4.0: 在 core.py 層過濾
         )
 
-        # Filter by min_score if provided
-        if args.min_score > 0:
-            results = [r for r in results if r.score >= args.min_score]
+        # v3.4.0: 結果已是 dict 格式，無需再次過濾
+        # results 現在是 [{'content': str, 'score': float, 'source': str, 'priority': str}, ...]
 
         # Format and output (pure JSON only)
         formatted = format_results_for_json(results)

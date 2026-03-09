@@ -148,8 +148,17 @@ class VectorSearch:
                 self.keyword_index[kw] = []
             self.keyword_index[kw].append(ms.id)
 
-    def search(self, query: str, top_k: int = 5) -> List[SearchResult]:
-        """Search memory with CJK support"""
+    def search(self, query: str, top_k: int = 5, min_score: float = 0.0) -> List[SearchResult]:
+        """
+        Search memory with CJK support
+        
+        Args:
+            query: Search query
+            top_k: Number of results to return
+            min_score: Minimum score threshold (filters results below this score)
+        
+        v3.4.1: 新增 min_score 參數支持
+        """
         query_keywords = self._expand_query(query)
         scores = {}
         matches_count = {}  # 記錄每個 segment 匹配的關鍵詞數量
@@ -204,6 +213,10 @@ class VectorSearch:
                 query_lower = query.lower()
                 exact_match_bonus = 2.0 if query_lower in content_lower else 0.0
                 final_score = scores[seg_id] + exact_match_bonus
+                
+                # v3.4.0: 過濾低於 min_score 的結果
+                if final_score < min_score:
+                    continue
 
                 results.append(SearchResult(
                     content=seg.content,
