@@ -1,12 +1,21 @@
 <div align="center">
 
-# 🧠 Soul Memory System v3.3.2
+# 🧠 Soul Memory System v3.4.1
 
 ### Intelligent Memory Management System
 
 **Long-term memory framework for AI Agents**
 
-**🆕 v3.3.2 - Heartbeat Cron 優化 (12h) + 自我報告過濾**
+**🆕 v3.4.1 - Bugfix: min_score 支持 + CLI dict 兼容 + 語義緩存優化**
+
+[![Python 3.7+](https://img.shields.io/badge/python-3.7%2B-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![CJK Support](https://img.shields.io/badge/CJK-%E4%B8%AD%E6%97%A5%E9%9F%93-red.svg)]()
+[![Cantonese](https://img.shields.io/badge/粵語-支援-orange.svg)]()
+[![OpenClaw](https://img.shields.io/badge/OpenClaw-Plugin-v0.2.1_beta-blue.svg)]()
+[![ClawHub](https://img.shields.io/badge/ClawHub-soul--memory-purple.svg)](https://clawhub.ai)
+
+</div>
 
 [![Python 3.7+](https://img.shields.io/badge/python-3.7%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
@@ -15,6 +24,48 @@
 [![OpenClaw](https://img.shields.io/badge/OpenClaw-Plugin-v0.2.1_beta-blue.svg)]()
 
 </div>
+
+---
+
+## 🆕 v3.4.1 Release Highlights (Latest)
+
+### 🐛 Bugfix Release - 2026-03-09
+
+| 修復項目 | 說明 |
+|----------|------|
+| **min_score 參數支持** | `vector_search.py` 現支持 `min_score` 過濾閾值 |
+| **CLI dict 兼容** | `cli.py` 支持 dict 和 SearchResult 雙格式 |
+| **緩存返回格式** | 語義緩存命中時正確轉換為 SearchResult 對象 |
+
+**兼容性**: 完全向後兼容 v3.4.0 和 v3.3.x
+
+---
+
+## 🆕 v3.4.0 Release Highlights
+
+### 🎯 語義緩存層 + 動態上下文窗口
+
+| 功能 | 說明 |
+|------|------|
+| **語義緩存 (Semantic Cache)** | 自動緩存搜索結果，減少重複計算 |
+| **動態上下文窗口** | 根據查詢複雜度自動調整注入記憶數量 |
+| **多引擎協同** | 關鍵詞 + 語義 + 緩存三層協同工作 |
+| **性能提升** | 緩存命中後搜索速度提升 10-50x |
+
+### 技術實現
+
+```python
+# 語義緩存自動啟用
+system = SoulMemorySystem()
+results = system.search("QST 理論", top_k=5)
+# 首次：完整搜索 (~2-5 秒)
+# 第二次：緩存命中 (~0.1 秒)
+```
+
+**緩存策略**:
+- 自動緩存最近 100 個查詢
+- LRU 淘汰機制
+- 自動過期（24 小時）
 
 ---
 
@@ -407,6 +458,23 @@ python3 test_all_modules.py
 
 | Version | Date | Changes |
 |---------|------|---------|
+| **v3.4.1** | 2026-03-09 | 🐛 **Bugfix**: min_score 支持 + CLI dict 兼容 + 緩存返回格式修復 |
+| **v3.4.0** | 2026-03-08 | 🆕 **語義緩存層** + **動態上下文窗口** + 多引擎協同 (性能提升 10-50x) |
+| **v3.3.4** | 2026-03-05 | 🔧 查詢過濾優化（跳過問候語/簡單命令） |
+| **v3.3.3** | 2026-03-05 | 🔄 每日快取自動重建（跨日索引更新） |
+| **v3.3.2** | 2026-03-03 | 🆕 **Heartbeat Cron 優化** (3h→12h) + 自我報告過濾器 + 記憶污染防護 |
+| **v3.3.1** | 2026-02-27 | 🆕 **Heartbeat 自動清理** + Cron Job 集成 + 記憶質量優化（7.9→8.5） |
+| **v3.3** | 2026-02-23 | **Heartbeat 去重機制** + **寬鬆模式** + **CLI 接口** + **OpenClaw Plugin v0.1.0 beta** |
+| **v3.2.1** | 2026-02-19 | **索引策略改進**：Markdown 區塊級索引，減少 93% Token 消耗 |
+| **v3.2.0** | 2026-02-19 | **Heartbeat 主動提取** + **寬鬆模式**（降低識別閾值） |
+| **v3.1.1** | 2026-02-19 | **Hotfix**: 雙軌記憶持久化防止 OpenClaw 會話覆蓋 |
+| **v3.1.0** | 2026-02-18 | **廣東話語法分支**：語氣詞分級 + 語境映射 + 粵語檢測 |
+| **v3.0.0** | 2026-02-18 | **Web UI v1.0**: FastAPI dashboard + real-time stats |
+| **v2.2.0** | 2026-02-18 | **CJK 智能分詞** + **Post-Response Auto-Save** |
+| **v2.1.0** | 2026-02-17 | 重新品牌為 Soul Memory，技術中立化 |
+| **v2.0.0** | 2026-02-17 | 自託管版本，完全獨立 |
+
+---------|------|---------|
 | **v3.3.2** | 2026-03-01 | 🆕 前置過濾 + 每日檔案滾動（500行/50KB）+ 400字摘要化 + 模板去重強化 |
 | **v3.3.2** | 2026-03-03 | 🆕 **Heartbeat Cron 優化** (3h→12h) + 自我報告過濾器 + 記憶污染防護 |
 | **v3.3.1** | 2026-02-27 | 🆕 **Heartbeat 自動清理** + Cron Job 集成 + 記憶質量優化（7.9→8.5） |
