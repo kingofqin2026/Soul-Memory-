@@ -55,6 +55,11 @@ categories.json
 heat_map.json
 versions.json
 
+# Runtime Auto-Generated Files (DO NOT COMMIT)
+dedup_hashes.json
+soul_memory.md
+daily-consolidate.log
+
 # OS
 .DS_Store
 Thumbs.db
