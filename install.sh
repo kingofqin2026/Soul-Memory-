@@ -357,6 +357,142 @@ HEARTBEAT
     fi
 }
 
+setup_cron_jobs() {
+    print_step "配置 Soul Memory Cron Jobs..."
+
+    # 1. 創建每日整合腳本
+    DAILY_SCRIPT="${INSTALL_PATH}/daily-consolidate.py"
+    if [ ! -f "$DAILY_SCRIPT" ]; then
+        print_step "創建每日記憶整合腳本..."
+        cat > "$DAILY_SCRIPT" << 'DAILY_SCRIPT'
+#!/usr/bin/env python3
+"""
+Soul Memory 每日整合腳本 v1.0
+功能：將當日 memory/YYYY-MM-DD.md 內容整合到 soul_memory.md
+執行時間：每日 23:59 UTC
+"""
+
+import sys
+from pathlib import Path
+from datetime import datetime, timedelta
+
+WORKSPACE = Path.home() / ".openclaw" / "workspace"
+MEMORY_DIR = WORKSPACE / "memory"
+SOUL_MEMORY_FILE = WORKSPACE / "soul-memory" / "soul_memory.md"
+
+def get_today_md():
+    """獲取今日的記憶文件路徑"""
+    today = datetime.now().strftime('%Y-%m-%d')
+    return MEMORY_DIR / f"{today}.md"
+
+def get_yesterday_md():
+    """獲取昨日的記憶文件路徑（以防當日文件尚未充實）"""
+    yesterday = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+    return MEMORY_DIR / f"{yesterday}.md"
+
+def read_md_file(path):
+    """讀取 md 文件內容"""
+    if not path.exists():
+        return None
+    with open(path, 'r', encoding='utf-8') as f:
+        return f.read()
+
+def append_to_soul_memory(content, date_str):
+    """追加內容到 soul_memory.md"""
+    # 確保文件存在
+    SOUL_MEMORY_FILE.parent.mkdir(parents=True, exist_ok=True)
+    
+    # 讀取現有內容（如有）
+    existing = ""
+    if SOUL_MEMORY_FILE.exists():
+        with open(SOUL_MEMORY_FILE, 'r', encoding='utf-8') as f:
+            existing = f.read()
+    
+    # 檢查是否已包含今日內容（避免重複）
+    if f"## {date_str}" in existing:
+        print(f"⏭️  {date_str} 已存在於 soul_memory.md，跳過")
+        return False
+    
+    # 追加新內容
+    header = f"\n\n{'='*60}\n"
+    header += f"## {date_str} - 每日記憶歸檔\n"
+    header += f"{'='*60}\n\n"
+    
+    with open(SOUL_MEMORY_FILE, 'a', encoding='utf-8') as f:
+        f.write(header)
+        f.write(content)
+        f.write("\n")
+    
+    return True
+
+def main():
+    print("🧠 Soul Memory 每日整合開始...")
+    
+    # 優先處理今日文件
+    today_path = get_today_md()
+    today_content = read_md_file(today_path)
+    
+    if today_content:
+        date_str = datetime.now().strftime('%Y-%m-%d')
+        if append_to_soul_memory(today_content, date_str):
+            print(f"✅ 今日記憶已整合：{today_path}")
+        else:
+            print(f"⏭️  今日記憶已存在，跳過")
+    else:
+        print(f"⚠️  今日文件不存在：{today_path}")
+        
+        # 嘗試昨日文件
+        yesterday_path = get_yesterday_md()
+        yesterday_content = read_md_file(yesterday_path)
+        
+        if yesterday_content:
+            date_str = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+            if append_to_soul_memory(yesterday_content, date_str):
+                print(f"✅ 昨日記憶已整合：{yesterday_path}")
+            else:
+                print(f"⏭️  昨日記憶已存在，跳過")
+        else:
+            print(f"⚠️  昨日文件也不存在：{yesterday_path}")
+    
+    print("🧠 Soul Memory 每日整合完成")
+
+if __name__ == "__main__":
+    main()
+DAILY_SCRIPT
+        chmod +x "$DAILY_SCRIPT"
+        print_success "每日整合腳本已創建"
+    else
+        print_success "每日整合腳本已存在"
+    fi
+
+    # 2. 配置 crontab
+    print_step "配置 Cron Jobs..."
+    
+    # 創建臨時 cron 文件
+    CRON_TMP="/tmp/soul_memory_cron_$$"
+    
+    # 檢查是否已存在相關 cron
+    if crontab -l 2>/dev/null | grep -q "soul_memory"; then
+        print_warning "Soul Memory cron jobs 已存在，跳過添加"
+    else
+        # 添加新的 cron jobs
+        cat > "$CRON_TMP" << 'CRON'
+# Soul Memory 每日整合 - 每日 23:59 UTC 執行（香港時間 07:59）
+59 23 * * * cd /root/.openclaw/workspace/soul-memory && /usr/bin/python3 daily-consolidate.py >> /tmp/soul_memory_consolidate.log 2>&1
+CRON
+        
+        # 合併現有 cron 和新 cron
+        (crontab -l 2>/dev/null | grep -v "soul_memory" ; cat "$CRON_TMP") | crontab -
+        rm -f "$CRON_TMP"
+        print_success "Cron jobs 已添加"
+        
+        # 顯示配置的 cron
+        echo ""
+        echo -e "${GREEN}已配置的 Cron Jobs:${NC}"
+        crontab -l | grep "soul_memory"
+    fi
+}
+
 setup_openclaw_plugin() {
     if [ "$INSTALL_PLUGIN" != true ]; then
         return
@@ -732,7 +868,13 @@ print_summary() {
     echo "3. 測試 Heartbeat:"
     echo -e "   ${YELLOW}python3 $INSTALL_PATH/heartbeat-trigger.py${NC}"
     echo ""
-    echo "4. 重建記憶索引（如果升級後舊索引不準確）:"
+    echo "4. 查看已配置的 Cron Jobs:"
+    echo -e "   ${YELLOW}crontab -l | grep soul_memory${NC}"
+    echo ""
+    echo "5. 手動測試每日整合:"
+    echo -e "   ${YELLOW}python3 $INSTALL_PATH/daily-consolidate.py${NC}"
+    echo ""
+    echo "6. 重建記憶索引（如果升級後舊索引不準確）:"
     echo -e "   ${YELLOW}python3 $INSTALL_PATH/rebuild_index.py${NC}"
     echo ""
     if [ "$INSTALL_PLUGIN" = true ]; then
@@ -788,6 +930,7 @@ main() {
     fi
 
     setup_heartbeat_v33
+    setup_cron_jobs
     setup_openclaw_plugin
     setup_environment
 
