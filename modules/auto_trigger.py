@@ -129,10 +129,30 @@ def auto_trigger(query: str, top_k: int = 5) -> Dict[str, Any]:
     return trigger.trigger(query, top_k)
 
 
-def get_memory_context(query: str) -> str:
-    """Get memory context as string"""
-    result = auto_trigger(query)
-    return result.get('context', '')
+from modules.soul_merge import get_context_for_label
+
+# ... (現有代碼保持不變)
+
+def get_memory_context(system, query: str) -> str:
+    """
+    v3.5.1 自動偵測與上下文注入：
+    1. 偵測主題 (Detective)
+    2. 檢索 soul_memory.md (Retrieval)
+    3. 生成 soul"..." 標籤 (Context Injection)
+    """
+    # 這裡演示關鍵詞偵測，實際可結合 self._detect_category
+    labels = []
+    if "QST" in query.upper(): labels.append("QST")
+    if "翻譯" in query: labels.append("翻譯系統")
+    
+    context_str = ""
+    for label in labels:
+        content = get_context_for_label(system.soul_memory_path.read_text(encoding='utf-8'), label)
+        if content:
+            # 放入上下文，格式化為 soul"..."
+            context_str += f'\nsoul"{label}"\n{content}\n'
+            
+    return context_str
 
 
 if __name__ == "__main__":
