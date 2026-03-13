@@ -10,7 +10,15 @@ import json
 import re
 import hashlib
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+
+# ========== 配置 ==========
+# 時區配置：香港時間 (UTC+8)
+HK_TZ = timezone(timedelta(hours=8))
+
+def get_hk_datetime():
+    """獲取香港時間"""
+    return datetime.now(HK_TZ)
 
 SOUL_MEMORY_PATH = os.environ.get('SOUL_MEMORY_PATH', os.path.dirname(__file__))
 sys.path.insert(0, SOUL_MEMORY_PATH)
@@ -261,8 +269,9 @@ def get_daily_output_file(base_date=None, max_lines=500, max_bytes=50*1024):
     return daily_dir / f"{base_date}-overflow.md"
 
 def save_to_daily_file(content, priority):
-    """保存到 daily file"""
-    today = datetime.now().strftime('%Y-%m-%d')
+    """保存到 daily file（使用香港時間）"""
+    hk_now = get_hk_datetime()
+    today = hk_now.strftime('%Y-%m-%d')
     daily_dir = Path.home() / ".openclaw" / "workspace" / "memory"
     daily_file = daily_dir / f"{today}.md"
     
@@ -270,11 +279,11 @@ def save_to_daily_file(content, priority):
     daily_dir.mkdir(parents=True, exist_ok=True)
     
     # 生成內容
-    timestamp = datetime.now().strftime('%H:%M')
+    timestamp = hk_now.strftime('%H:%M')
     header = "\n\n" + "-" * 50 + "\n"
     header += f"## [{priority}] {timestamp} - Heartbeat 自動提取\n"
     header += f"**來源**：Session 對話回顧\n"
-    header += f"**時區**：UTC\n\n"
+    header += f"**時區**：HKT (UTC+8)\n\n"
     
     # 追加到檔案
     with open(daily_file, 'a', encoding='utf-8') as f:
@@ -313,9 +322,9 @@ def get_content_hash(content):
     return hashlib.md5(normalized.encode('utf-8')).hexdigest()
 
 def get_saved_hashes(today_date=None):
-    """獲取已保存的內容哈希"""
+    """獲取已保存的內容哈希（使用香港時間）"""
     if today_date is None:
-        today_date = datetime.now().strftime('%Y-%m-%d')
+        today_date = get_hk_datetime().strftime('%Y-%m-%d')
 
     if not DEDUP_FILE.exists():
         return {}
@@ -355,8 +364,8 @@ def save_hash(today_date, content_hash):
         print(f"⚠️ 保存去重記錄失敗: {e}")
 
 def check_daily_memory():
-    """檢查今日記憶檔案"""
-    today = datetime.now().strftime('%Y-%m-%d')
+    """檢查今日記憶檔案（使用香港時間）"""
+    today = get_hk_datetime().strftime('%Y-%m-%d')
     daily_file = Path.home() / ".openclaw" / "workspace" / "memory" / f"{today}.md"
     
     if daily_file.exists():
@@ -381,7 +390,8 @@ def main():
     # 步驟 1：檢查現有記憶
     auto_save_count, heartbeat_extract_count = check_daily_memory()
 
-    print(f"\n🩺 Heartbeat 記憶檢查 ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')} UTC)")
+    hk_now = get_hk_datetime()
+    print(f"\n🩺 Heartbeat 記憶檢查 ({hk_now.strftime('%Y-%m-%d %H:%M:%S')} HKT/UTC+8)")
     print(f"- [Auto-Save] 條目：{auto_save_count} 條")
     print(f"- [Heartbeat 提取] 條目：{heartbeat_extract_count} 條")
 
@@ -402,8 +412,8 @@ def main():
         important = identify_important_content(messages)
         print(f"⭐ 識別出 {len(important)} 條重要內容")
 
-        # 去重：獲取已保存的哈希
-        today = datetime.now().strftime('%Y-%m-%d')
+        # 去重：獲取已保存的哈希（使用香港時間）
+        today = get_hk_datetime().strftime('%Y-%m-%d')
         saved_hashes = get_saved_hashes(today)
         print(f"🔒 已有 {len(saved_hashes)} 條今日記憶")
 

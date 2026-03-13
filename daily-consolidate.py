@@ -1,26 +1,34 @@
 #!/usr/bin/env python3
 """
-Soul Memory 每日整合腳本 v1.0
+Soul Memory 每日整合腳本 v1.1
 功能：將當日 memory/YYYY-MM-DD.md 內容整合到 soul_memory.md
-執行時間：每日 23:59 UTC
+執行時間：每日 23:59 HKT (香港時間 UTC+8)
+時區：HKT (UTC+8)
 """
 
 import sys
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+
+# 香港時區 (UTC+8)
+HK_TZ = timezone(timedelta(hours=8))
+
+def get_hk_datetime():
+    """獲取香港時間"""
+    return datetime.now(HK_TZ)
 
 WORKSPACE = Path.home() / ".openclaw" / "workspace"
 MEMORY_DIR = WORKSPACE / "memory"
 SOUL_MEMORY_FILE = WORKSPACE / "soul-memory" / "soul_memory.md"
 
 def get_today_md():
-    """獲取今日的記憶文件路徑"""
-    today = datetime.now().strftime('%Y-%m-%d')
+    """獲取今日的記憶文件路徑（使用香港時間）"""
+    today = get_hk_datetime().strftime('%Y-%m-%d')
     return MEMORY_DIR / f"{today}.md"
 
 def get_yesterday_md():
-    """獲取昨日的記憶文件路徑（以防當日文件尚未充實）"""
-    yesterday = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+    """獲取昨日的記憶文件路徑（使用香港時間）"""
+    yesterday = (get_hk_datetime() - timedelta(days=1)).strftime('%Y-%m-%d')
     return MEMORY_DIR / f"{yesterday}.md"
 
 def read_md_file(path):
@@ -59,14 +67,15 @@ def append_to_soul_memory(content, date_str):
     return True
 
 def main():
-    print("🧠 Soul Memory 每日整合開始...")
+    hk_now = get_hk_datetime()
+    print(f"🧠 Soul Memory 每日整合開始... ({hk_now.strftime('%Y-%m-%d %H:%M:%S')} HKT)")
     
     # 優先處理今日文件
     today_path = get_today_md()
     today_content = read_md_file(today_path)
     
     if today_content:
-        date_str = datetime.now().strftime('%Y-%m-%d')
+        date_str = hk_now.strftime('%Y-%m-%d')
         if append_to_soul_memory(today_content, date_str):
             print(f"✅ 今日記憶已整合：{today_path}")
         else:
@@ -79,7 +88,7 @@ def main():
         yesterday_content = read_md_file(yesterday_path)
         
         if yesterday_content:
-            date_str = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+            date_str = (get_hk_datetime() - timedelta(days=1)).strftime('%Y-%m-%d')
             if append_to_soul_memory(yesterday_content, date_str):
                 print(f"✅ 昨日記憶已整合：{yesterday_path}")
             else:
