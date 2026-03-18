@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
-Soul Memory System v3.6.1 - Core Orchestrator
+Soul Memory System v3.6.2 - Core Orchestrator
 智能記憶管理系統 + 語義緩存 + 動態上下文窗口 + OpenClaw 2026.3.7 深度集成
 
 Author: Li Si (李斯)
 Date: 2026-03-09
 
+v3.6.2 - Restore _build_index() implementation so memory search can build real segments again
 v3.6.1 - Add typed memory focus injection, distilled summaries, and audit logging
 v3.6.0 - Fix CLI pure JSON output, prefer last user message for memory query, improve plugin injection reliability
 v3.5.2 - Query extraction and long-term archive improvements
@@ -59,10 +60,10 @@ from modules.soul_merge import merge_memory, get_context_for_label
 
 class SoulMemorySystem:
     """
-    Soul Memory System v3.6.1
+    Soul Memory System v3.6.2
     """
 
-    VERSION = "3.6.1"
+    VERSION = "3.6.2"
 
     def __init__(self, base_path: Optional[str] = None):
         """Initialize memory system"""
@@ -152,10 +153,44 @@ class SoulMemorySystem:
         print("✅ Memory system initialized\n")
 
     def _build_index(self):
-        """Build search index from memory files"""
-        # Implementation remains the same as v3.3.4
-        # ... (existing code)
-        pass
+        """Build search index from memory files."""
+        # Reset in-memory index first
+        self.vector_search = VectorSearch()
+
+        memory_files = []
+
+        # Main long-term memory
+        main_memory = Path.home() / ".openclaw" / "workspace" / "MEMORY.md"
+        if main_memory.exists() and main_memory.is_file():
+            memory_files.append(main_memory)
+
+        # Long-term soul archive
+        if self.soul_memory_path.exists() and self.soul_memory_path.is_file():
+            memory_files.append(self.soul_memory_path)
+
+        # Daily memory files (latest first)
+        memory_dir = Path.home() / ".openclaw" / "workspace" / "memory"
+        if memory_dir.exists() and memory_dir.is_dir():
+            md_files = sorted(memory_dir.glob("*.md"), key=lambda x: x.name, reverse=True)
+            memory_files.extend(md_files)
+
+        # Index all discovered files
+        for memory_file in memory_files:
+            try:
+                self.vector_search.index_file(memory_file)
+            except Exception as e:
+                print(f"⚠️  Failed to index {memory_file}: {e}")
+
+        # Export and persist index
+        data = self.vector_search.export_index()
+        data['built_at'] = datetime.now().isoformat()
+        data['categories'] = self.classifier.get_categories()
+
+        index_file = self.cache_path / "index.json"
+        with open(index_file, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+
+        self.indexed = True
 
     def search(self, query: str, top_k: int = 5, min_score: float = 0.0, 
                use_cache: bool = True, use_dynamic: bool = True) -> List[Dict]:

@@ -1,7 +1,7 @@
 ---
 name: soul-memory
-version: 3.6.1
-description: "Intelligent memory management system v3.6.1 - reliable pre-response memory injection for OpenClaw with pure JSON CLI output, last-user-message query extraction, typed memory focus grouping, distilled summaries, and audit logging."
+version: 3.6.2
+description: "Intelligent memory management system v3.6.2 - restores real memory index building, alongside reliable pre-response memory injection, pure JSON CLI output, last-user-message query extraction, typed memory focus grouping, distilled summaries, and audit logging."
 license: MIT
 author: kingofqin2026
 homepage: https://github.com/kingofqin2026/Soul-Memory-
@@ -27,11 +27,11 @@ tags:
   - Developer-Tools
 ---
 
-# Soul Memory System v3.6.1
+# Soul Memory System v3.6.2
 
 ## 🧠 Intelligent Memory Management System
 
-Long-term memory framework for AI agents with full OpenClaw integration. **v3.6.1** 修正 pre-response memory injection 主流程：CLI 純 JSON 輸出、優先使用最後一條 user message 作 query、分類記憶注入（User / QST / Config / Recent / Project / General）、重點摘要壓縮、以及命中審計日誌。
+Long-term memory framework for AI agents with full OpenClaw integration. **v3.6.2** 補回真正的 `_build_index()` 實作，讓 memory search 能建立實際 segments；同時保留 v3.6.1 的修正：CLI 純 JSON 輸出、優先使用最後一條 user message 作 query、分類記憶注入（User / QST / Config / Recent / Project / General）、重點摘要壓縮、以及命中審計日誌。
 
 ---
 
