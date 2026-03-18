@@ -1,7 +1,7 @@
 ---
 name: soul-memory
-version: 3.6.2
-description: "Intelligent memory management system v3.6.2 - restores real memory index building, alongside reliable pre-response memory injection, pure JSON CLI output, last-user-message query extraction, typed memory focus grouping, distilled summaries, and audit logging."
+version: 3.6.3
+description: "Intelligent memory management system v3.6.3 - cleans noisy injected memory focus by stripping heartbeat/tool metadata before context injection, while preserving real index building and reliable pre-response memory injection."
 license: MIT
 author: kingofqin2026
 homepage: https://github.com/kingofqin2026/Soul-Memory-

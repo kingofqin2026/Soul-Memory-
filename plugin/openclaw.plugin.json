@@ -1,7 +1,7 @@
 {
   "id": "soul-memory",
   "name": "Soul Memory Context Injector",
-  "version": "0.3.6.1",
+  "version": "0.3.6.3",
   "description": "Automatically injects Soul Memory search results before each response. v3.6.1 adds typed memory focus grouping, distilled summaries, and audit logging before prependContext injection.",
   "main": "index.ts",
   "configSchema": {

@@ -60,9 +60,23 @@ async function searchMemories(query: string, config: SoulMemoryConfig): Promise<
 
 type MemoryBucket = 'User' | 'QST' | 'Config' | 'Recent' | 'Project' | 'General';
 
+function cleanMemorySnippet(text: string): string {
+  let cleaned = text || '';
+  cleaned = cleaned.replace(/\[[CIN]\]\s*\d{1,2}:\d{2}\s*Heartbeat 自動提取\s*\|\s*來源\s*：?\s*Session 對話回顧\s*\|\s*時區\s*：?\s*[^|]+\|?/gi, '');
+  cleaned = cleaned.replace(/Conversation info \(untrusted metadata\):[\s\S]*$/gi, '');
+  cleaned = cleaned.replace(/Sender \(untrusted metadata\):[\s\S]*$/gi, '');
+  cleaned = cleaned.replace(/Successfully replaced text in\s+[^|]+\.?/gi, '');
+  cleaned = cleaned.replace(/===\s*[^|]+\s*===/g, '');
+  cleaned = cleaned.replace(/\b(total\s+\d+|drwxr[-\w\s]+|command exited with code \d+)\b/gi, '');
+  cleaned = cleaned.replace(/```[\s\S]*?```/g, '');
+  cleaned = cleaned.replace(/\|\s*\|+/g, '|');
+  return cleaned;
+}
+
 function normalizeText(text: string): string {
-  return (text || '')
+  return cleanMemorySnippet(text)
     .replace(/[`*_#>-]/g, ' ')
+    .replace(/\s*\|\s*/g, ' · ')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -73,9 +87,17 @@ function summarizeText(text: string, maxLen: number = 160): string {
   return normalized.slice(0, maxLen - 1).trimEnd() + '…';
 }
 
-function classifyMemory(result: MemoryResult): MemoryBucket {
+function isNoisyMemory(result: MemoryResult): boolean {
   const hay = `${result.path || ''} ${result.content || ''}`.toLowerCase();
+  return /(heartbeat 自動提取|conversation info \(untrusted metadata\)|sender \(untrusted metadata\)|successfully replaced text in|plugin registered|hook registered|loaded index with|=== |drwxr|command exited with code|exec completed)/.test(hay);
+}
 
+function classifyMemory(result: MemoryResult): MemoryBucket {
+  const hay = `${result.path || ''} ${cleanMemorySnippet(result.content || '')}`.toLowerCase();
+
+  if (isNoisyMemory(result)) {
+    return 'General';
+  }
   if (/(user\.md|identity|preferred name|what to call|timezone|秦王|陛下|偏好|喜歡|user)/.test(hay)) {
     return 'User';
   }
@@ -99,7 +121,7 @@ function groupMemories(results: MemoryResult[]): Record<MemoryBucket, MemoryResu
     User: [], QST: [], Config: [], Recent: [], Project: [], General: []
   };
 
-  for (const result of results) {
+  for (const result of results.filter(r => !isNoisyMemory(r))) {
     grouped[classifyMemory(result)].push(result);
   }
 
@@ -113,11 +135,12 @@ function formatSource(path?: string): string {
 }
 
 function buildMemoryContext(results: MemoryResult[]): string {
-  if (results.length === 0) {
+  const filteredResults = results.filter(r => !isNoisyMemory(r));
+  if (filteredResults.length === 0) {
     return '';
   }
 
-  const grouped = groupMemories(results);
+  const grouped = groupMemories(filteredResults);
   const bucketOrder: MemoryBucket[] = ['User', 'QST', 'Config', 'Recent', 'Project', 'General'];
   let context = '\nSoulM"';
   context += '## Memory Focus\n';

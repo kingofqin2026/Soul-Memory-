@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Soul Memory System v3.6.2 - Core Orchestrator
+Soul Memory System v3.6.3 - Core Orchestrator
 智能記憶管理系統 + 語義緩存 + 動態上下文窗口 + OpenClaw 2026.3.7 深度集成
 
 Author: Li Si (李斯)
@@ -282,6 +282,13 @@ class SoulMemorySystem:
                 'version': context_stats['version'],
                 'base_topK': context_stats['base_topK'],
                 'base_min_score': context_stats['base_min_score']
+            }
+        }
+
+
+# Keep existing auto_trigger and other functions
+# ...
+['base_min_score']
             }
         }
 
