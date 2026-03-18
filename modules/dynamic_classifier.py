@@ -61,15 +61,50 @@ class DynamicClassifier:
         if cache_file.exists():
             with open(cache_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-            for name, kw_list in data.get('categories', {}).items():
-                self.categories[name] = Category(
-                    name=name,
-                    keywords=set(kw_list)
-                )
+            self.load_categories(data.get('categories', {}))
         else:
             # Use defaults
             for name, keywords in self.DEFAULT_CATEGORIES.items():
+                self.categories[name] = Category(name=name, keywords=set(keywords))
+
+    def load_categories(self, categories):
+        """Compatibility loader for cached/indexed categories.
+
+        Supports:
+        - dict[str, list[str]]
+        - list[str] (category names only)
+        - None / empty values
+
+        This keeps older core/index code working without forcing a rebuild.
+        """
+        self.categories = {}
+
+        if not categories:
+            for name, keywords in self.DEFAULT_CATEGORIES.items():
+                self.categories[name] = Category(name=name, keywords=set(keywords))
+            return
+
+        if isinstance(categories, dict):
+            for name, kw_list in categories.items():
+                if isinstance(kw_list, (list, set, tuple)):
+                    keywords = set(str(k) for k in kw_list)
+                else:
+                    keywords = set()
                 self.categories[name] = Category(name=name, keywords=keywords)
+            return
+
+        if isinstance(categories, list):
+            for name in categories:
+                if not isinstance(name, str):
+                    continue
+                default_keywords = self.DEFAULT_CATEGORIES.get(name, set())
+                self.categories[name] = Category(name=name, keywords=set(default_keywords))
+            if self.categories:
+                return
+
+        # Fallback to defaults on unknown format
+        for name, keywords in self.DEFAULT_CATEGORIES.items():
+            self.categories[name] = Category(name=name, keywords=set(keywords))
     
     def _save_categories(self):
         """Save categories to cache"""
