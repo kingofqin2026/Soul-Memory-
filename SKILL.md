@@ -1,7 +1,7 @@
 ---
 name: soul-memory
-version: 3.4.1
-description: "Intelligent memory management system v3.4.1 - OpenClaw 2026.3.7 Pluggable Context Engine integration, Semantic Cache Layer, Dynamic Context Window, Multi-Context Collaboration, 10x faster search, 40% token savings. Bugfix: min_score support + CLI dual-format compatibility."
+version: 3.6.1
+description: "Intelligent memory management system v3.6.1 - reliable pre-response memory injection for OpenClaw with pure JSON CLI output, last-user-message query extraction, typed memory focus grouping, distilled summaries, and audit logging."
 license: MIT
 author: kingofqin2026
 homepage: https://github.com/kingofqin2026/Soul-Memory-
@@ -27,11 +27,11 @@ tags:
   - Developer-Tools
 ---
 
-# Soul Memory System v3.4.0
+# Soul Memory System v3.6.1
 
 ## 🧠 Intelligent Memory Management System
 
-Long-term memory framework for AI agents with full OpenClaw integration. **v3.4.0 - OpenClaw 2026.3.7 可插拔上下文引擎集成**：語義緩存層 + 動態上下文窗口 + 多引擎協同，性能提升 10x，Token 節省 40%。
+Long-term memory framework for AI agents with full OpenClaw integration. **v3.6.1** 修正 pre-response memory injection 主流程：CLI 純 JSON 輸出、優先使用最後一條 user message 作 query、分類記憶注入（User / QST / Config / Recent / Project / General）、重點摘要壓縮、以及命中審計日誌。
 
 ---
 
@@ -136,6 +136,14 @@ python3 cli.py stats --format json
 openclaw gateway restart
 ```
 
+### v3.6.1 Highlights
+
+- Pure JSON CLI output for reliable plugin parsing
+- Prefer last real user message over prompt tail for memory search query
+- Distilled memory summaries instead of raw long snippets
+- Typed memory focus buckets: User / QST / Config / Recent / Project / General
+- Audit logs for query source and injection buckets
+
 ---
 
 ## 🤖 OpenClaw Plugin Integration
@@ -144,9 +152,9 @@ openclaw gateway restart
 
 **Automatic Trigger**: Executes before each response
 
-1. Extract user query from `event.prompt` (current input, not history)
+1. Extract query from the last real user message (prompt only as fallback)
 2. Search relevant memories (top_k = 5)
-3. Format memory context
+3. Group and distill memory focus
 4. Inject into prompt via `prependContext`
 
 ### Configuration
