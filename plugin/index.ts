@@ -2,7 +2,7 @@
  * Soul Memory Plugin for OpenClaw
  * 
  * Automatically injects Soul Memory search results before each response
- * using the before_prompt_build Hook.
+ * using the before_prompt_build Hook. v3.6.0 prefers the last user message and expects pure JSON from the CLI.
  */
 
 import { exec } from 'child_process';
@@ -30,16 +30,27 @@ interface MemoryResult {
  */
 async function searchMemories(query: string, config: SoulMemoryConfig): Promise<MemoryResult[]> {
   try {
+    const escapedQuery = query.replace(/"/g, '\\"');
     const { stdout } = await execAsync(
-      `python3 /root/.openclaw/workspace/soul-memory/cli.py search "${query}" --top_k ${config.topK} --min_score ${config.minScore}`,
-      { timeout: 5000 } // 5 second timeout
+      `python3 /root/.openclaw/workspace/soul-memory/cli.py search "${escapedQuery}" --top_k ${config.topK} --min_score ${config.minScore}`,
+      { timeout: 5000 }
     );
 
-    // Parse JSON output
-    const results = JSON.parse(stdout || '[]');
-    return Array.isArray(results) ? results : [];
+    const trimmed = (stdout || '').trim();
+    if (!trimmed) return [];
+
+    try {
+      const results = JSON.parse(trimmed);
+      return Array.isArray(results) ? results : [];
+    } catch {
+      const match = trimmed.match(/(\[[\s\S]*\]|\{[\s\S]*\})/);
+      if (match) {
+        const recovered = JSON.parse(match[1]);
+        return Array.isArray(recovered) ? recovered : [];
+      }
+      throw new Error(`Non-JSON search output: ${trimmed.substring(0, 200)}`);
+    }
   } catch (error) {
-    // Silently fail on errors to avoid breaking the agent
     console.error('[Soul Memory] Search failed:', error instanceof Error ? error.message : String(error));
     return [];
   }
@@ -302,32 +313,28 @@ export default function register(api: any) {
       return {};
     }
 
-    // CRITICAL: Extract query from prompt, not from messages history
-    // Messages may contain injected memory from previous turns
-    const prompt = event.prompt || '';
+    // v3.6.0: Prefer the actual last user message from messages.
+    // Prompt text may end with system / metadata lines and is less reliable.
+    const messages = event.messages || [];
+    const cleanedMessages = cleanOldMemoryFromMessages(messages);
+    let lastUserMessage = getLastUserMessage(cleanedMessages);
 
-    // Extract query from the last line of prompt (user's actual question)
-    let userQuery = prompt.trim();
-
-    // Get the last line (user's current question)
-    const lastNewlineIndex = userQuery.lastIndexOf('\n');
-    if (lastNewlineIndex >= 0) {
-      userQuery = userQuery.substring(lastNewlineIndex + 1).trim();
-    }
-
-    // If prompt is empty, try to get from messages as fallback
-    let lastUserMessage = userQuery;
-
-    // v3.3.4 optimization: Skip search for greetings and simple commands
-    if (shouldSkipQuery(userQuery)) {
-      logger.debug(`[Soul Memory] Skipping search for simple query: "${userQuery.substring(0, 50)}"`);
-      return {};
-    }
+    // Fallback: derive from prompt only when user message is unavailable
     if (!lastUserMessage || lastUserMessage.length === 0) {
-      logger.debug('[Soul Memory] Prompt is empty, falling back to messages');
-      const messages = event.messages || [];
-      const cleanedMessages = cleanOldMemoryFromMessages(messages);
-      lastUserMessage = getLastUserMessage(cleanedMessages);
+      logger.debug('[Soul Memory] No user message found, falling back to prompt');
+      const prompt = event.prompt || '';
+      let userQuery = prompt.trim();
+      const lastNewlineIndex = userQuery.lastIndexOf('\n');
+      if (lastNewlineIndex >= 0) {
+        userQuery = userQuery.substring(lastNewlineIndex + 1).trim();
+      }
+      lastUserMessage = userQuery;
+    }
+
+    // v3.6.0 optimization: Skip search for greetings and simple commands
+    if (shouldSkipQuery(lastUserMessage)) {
+      logger.debug(`[Soul Memory] Skipping search for simple query: "${lastUserMessage.substring(0, 50)}"`);
+      return {};
     }
 
     logger.debug(`[Soul Memory] User query length: ${lastUserMessage.length}`);
@@ -359,12 +366,9 @@ export default function register(api: any) {
       return {};
     }
 
-    // Build memory context with marking
     const memoryContext = buildMemoryContext(results);
+    logger.info(`[Soul Memory] ✓ Injected ${results.length} memories into prependContext (${memoryContext.length} chars)`);
 
-    logger.info(`[Soul Memory] ✓ Injected ${results.length} memories with SoulM delimiters (${memoryContext.length} chars)`);
-
-    // Return with prependContext
     return {
       prependContext: memoryContext
     };

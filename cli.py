@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Soul Memory CLI Interface for OpenClaw Plugin
+Soul Memory CLI Interface for OpenClaw Plugin v3.6.0
 
 Provides a simple command-line interface for searching memories.
 Output is JSON formatted for easy parsing by TypeScript/JavaScript.
@@ -23,39 +23,45 @@ except ImportError:
 
 
 def format_results_for_json(results: List[SearchResult]) -> List[Dict[str, Any]]:
-    """Format search results for JSON output"""
+    """Format search results for JSON output.
+
+    Supports both legacy SearchResult objects and v3.4+ dict-style results.
+    """
     formatted = []
     for result in results:
-        formatted.append({
-            "path": result.source if hasattr(result, 'source') else "UNKNOWN",
-            "content": result.content.strip(),
-            "score": float(result.score),
-            "priority": result.priority if hasattr(result, 'priority') else "N"
-        })
+        if isinstance(result, dict):
+            formatted.append({
+                "path": result.get("source", result.get("path", "UNKNOWN")),
+                "content": str(result.get("content", "")).strip(),
+                "score": float(result.get("score", 0.0)),
+                "priority": result.get("priority", "N")
+            })
+        else:
+            formatted.append({
+                "path": result.source if hasattr(result, 'source') else "UNKNOWN",
+                "content": result.content.strip() if hasattr(result, 'content') else "",
+                "score": float(result.score) if hasattr(result, 'score') else 0.0,
+                "priority": result.priority if hasattr(result, 'priority') else "N"
+            })
     return formatted
 
 
 def search_command(args: argparse.Namespace) -> None:
     """Execute search command and output JSON results"""
     try:
-        # Suppress initialization output by redirecting stdout for initialization only
+        # Suppress all internal stdout chatter so plugin gets pure JSON only
         import io
-        old_stdout = sys.stdout
+        from contextlib import redirect_stdout
 
-        # Initialize memory system silently
-        sys.stdout = io.StringIO()
-        try:
+        silent_buf = io.StringIO()
+        with redirect_stdout(silent_buf):
             memory_system = SoulMemorySystem()
             memory_system.initialize()
-        finally:
-            sys.stdout = old_stdout
-
-        # Search (v3.4.0 returns list of dicts)
-        results = memory_system.search(
-            args.query,
-            top_k=args.top_k,
-            min_score=args.min_score  # v3.4.0: 在 core.py 層過濾
-        )
+            results = memory_system.search(
+                args.query,
+                top_k=args.top_k,
+                min_score=args.min_score
+            )
 
         # v3.4.0: 結果已是 dict 格式，無需再次過濾
         # results 現在是 [{'content': str, 'score': float, 'source': str, 'priority': str}, ...]

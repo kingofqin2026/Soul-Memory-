@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
-Soul Memory System v3.4.1 - Core Orchestrator
+Soul Memory System v3.6.0 - Core Orchestrator
 智能記憶管理系統 + 語義緩存 + 動態上下文窗口 + OpenClaw 2026.3.7 深度集成
 
 Author: Li Si (李斯)
 Date: 2026-03-09
 
-v3.4.1 - Bugfix: vector_search min_score 支持 + cli.py dict 兼容
+v3.6.0 - Fix CLI pure JSON output, prefer last user message for memory query, improve plugin injection reliability
+v3.5.2 - Query extraction and long-term archive improvements
 v3.4.0 - 語義緩存層 + 動態上下文窗口 + 多引擎協同
 v3.3.4 - 查詢過濾優化（跳過問候語/簡單命令）
 v3.3.3 - 每日快取自動重建（跨日索引更新）
@@ -57,10 +58,10 @@ from modules.soul_merge import merge_memory, get_context_for_label
 
 class SoulMemorySystem:
     """
-    Soul Memory System v3.5
+    Soul Memory System v3.6.0
     """
 
-    VERSION = "3.5.2"
+    VERSION = "3.6.0"
 
     def __init__(self, base_path: Optional[str] = None):
         """Initialize memory system"""
@@ -88,7 +89,7 @@ class SoulMemorySystem:
         # v3.5.0: Long-term Soul Archive
         self.soul_memory_path = self.base_path / "soul_memory.md"
         if not self.soul_memory_path.exists():
-            self.soul_memory_path.write_text("# Soul Memory - 最終儲存庫 (v3.5)\n", encoding='utf-8')
+            self.soul_memory_path.write_text("# Soul Memory - 最終儲存庫 (v3.6)\n", encoding='utf-8')
 
         self.indexed = False
 
