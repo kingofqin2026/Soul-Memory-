@@ -18,7 +18,7 @@ from modules.semantic_dedup import PersistentDedup
 from modules.version_control import VersionControl
 
 class SoulMemorySystem:
-    VERSION = "3.5.4"
+    VERSION = "3.5.5"
     
     def __init__(self, workspace_path: Optional[str] = None):
         if workspace_path:
@@ -33,7 +33,8 @@ class SoulMemorySystem:
         self.priority_parser = PriorityParser()
         self.vector_search = VectorSearch()
         self.dynamic_classifier = DynamicClassifier()
-        self.dedup = PersistentDedup(str(self.workspace / "data" / "dedup.json"), threshold=0.88, category_based=True)
+        # v3.5.4: 提高 threshold 到 0.92（減少誤去重）
+        self.dedup = PersistentDedup(str(self.workspace / "data" / "dedup.json"), threshold=0.92, category_based=True)
         self.version_control = VersionControl(str(self.workspace))
         
         self.indexed = False

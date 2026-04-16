@@ -23,7 +23,7 @@ class SemanticDedup:
     第二層：語意相似度檢查（精確）
     """
     
-    def __init__(self, threshold=0.85, category_based=True):
+    def __init__(self, threshold=0.92, category_based=True):  # v3.5.4: 提高到 0.92
         """
         初始化去重器
         
@@ -165,7 +165,7 @@ class SemanticDedup:
 class PersistentDedup(SemanticDedup):
     """持久化去重器（將狀態保存到文件）"""
     
-    def __init__(self, storage_path: str, threshold=0.85, category_based=True):
+    def __init__(self, storage_path: str, threshold=0.92, category_based=True):  # v3.5.4
         """
         初始化持續化去重器
         
@@ -207,7 +207,7 @@ class PersistentDedup(SemanticDedup):
             with open(self.storage_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
             
-            self.threshold = data.get('threshold', 0.85)
+            self.threshold = data.get('threshold', 0.92)
             self.category_based = data.get('category_based', True)
             self.saved_hashes = set(data.get('saved_hashes', []))
             self.saved_contents = data.get('saved_contents', {})
