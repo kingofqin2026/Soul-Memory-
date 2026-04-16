@@ -294,14 +294,14 @@ def save_to_daily_file(content, priority):
     return str(daily_file)
 
 def normalize_for_dedup(content):
-    """內容正規化（模板去重）：移除時間戳、emoji/標頭、固定模板欄位"""
+    """內容正規化（v3.5.5 放寬）：只移除固定模板欄位，保留時間戳和 emoji"""
     normalized = content
-    # 移除時間
-    normalized = re.sub(r'\b\d{1,2}:\d{2}(:\d{2})?\b', '', normalized)
-    normalized = re.sub(r'\b\d{4}-\d{2}-\d{2}\b', '', normalized)
-    # 移除常見 emoji 標頭
-    normalized = re.sub(r'^[\s🔥⭐✅📊🩺💾📈⚠️🎯🏛️✨-]+', '', normalized)
-    # 移除模板欄位
+    # v3.5.5: 不移除時間戳（保留內容差異）
+    # normalized = re.sub(r'\b\d{1,2}:\d{2}(:\d{2})?\b', '', normalized)  # 已停用
+    # normalized = re.sub(r'\b\d{4}-\d{2}-\d{2}\b', '', normalized)  # 已停用
+    # v3.5.5: 不移除 emoji 標頭
+    # normalized = re.sub(r'^[\s🔥⭐✅📊🩺💾📈⚠️🎯🏛️✨-]+', '', normalized)  # 已停用
+    # 只移除固定模板欄位（這些是系統生成的固定內容）
     for pat in [
         r'來源[：:].*',
         r'時區[：:].*',
@@ -309,7 +309,8 @@ def normalize_for_dedup(content):
         r'識別重要內容[：:].*',
         r'保存位置[：:].*',
         r'今日總計.*條記憶',
-        r'Heartbeat 時間[：:].*'
+        r'Heartbeat 時間[：:].*',
+        r'Heartbeat 記憶檢查.*'
     ]:
         normalized = re.sub(pat, '', normalized)
     # 壓縮空白
