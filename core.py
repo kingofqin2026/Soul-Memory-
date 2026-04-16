@@ -1,297 +1,254 @@
-#!/usr/bin/env python3
-"""
-Soul Memory System v3.6.3 - Core Orchestrator
-智能記憶管理系統 + 語義緩存 + 動態上下文窗口 + OpenClaw 2026.3.7 深度集成
-
-Author: Li Si (李斯)
-Date: 2026-03-09
-
-v3.6.2 - Restore _build_index() implementation so memory search can build real segments again
-v3.6.1 - Add typed memory focus injection, distilled summaries, and audit logging
-v3.6.0 - Fix CLI pure JSON output, prefer last user message for memory query, improve plugin injection reliability
-v3.5.2 - Query extraction and long-term archive improvements
-v3.4.0 - 語義緩存層 + 動態上下文窗口 + 多引擎協同
-v3.3.4 - 查詢過濾優化（跳過問候語/簡單命令）
-v3.3.3 - 每日快取自動重建（跨日索引更新）
-v3.3.2 - Heartbeat 自我報告過濾
-v3.3.1 - Heartbeat 自動清理 + Cron Job 集成
-"""
-
 import os
 import sys
 import json
+import re
 import hashlib
-from typing import List, Optional, Dict, Any
-from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
+from typing import List, Dict, Any, Optional, Tuple
 from pathlib import Path
 
-# Ensure module path
-if __name__ == "__main__":
-    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Add project root to sys.path
+PROJECT_ROOT = Path(__file__).parent
+sys.path.append(str(PROJECT_ROOT))
 
-# Import all modules
-from modules.priority_parser import PriorityParser, Priority, ParsedMemory
-from modules.vector_search import VectorSearch, SearchResult
+from modules.priority_parser import PriorityParser
+from modules.vector_search import VectorSearch
 from modules.dynamic_classifier import DynamicClassifier
+from modules.semantic_dedup import PersistentDedup
 from modules.version_control import VersionControl
-from modules.memory_decay import MemoryDecay
-from modules.auto_trigger import AutoTrigger, auto_trigger, get_memory_context
-from modules.cantonese_syntax import CantoneseSyntaxBranch, CantoneseAnalysisResult, ToneIntensity, ContextType
-from modules.heartbeat_filter import HeartbeatFilter, should_filter_memory
-
-# v3.4.0: 新增模組
-from modules.semantic_cache import SemanticCache, get_cache
-from modules.dynamic_context import DynamicContextWindow, get_context_window, QueryComplexity
-
-
-@dataclass
-class MemoryQueryResult:
-    """Memory query result"""
-    content: str
-    score: float
-    source: str
-    line_number: int
-    category: str
-    priority: str
-
-
-from modules.soul_merge import merge_memory, get_context_for_label
 
 class SoulMemorySystem:
-    """
-    Soul Memory System v3.6.2
-    """
-
-    VERSION = "3.6.2"
-
-    def __init__(self, base_path: Optional[str] = None):
-        """Initialize memory system"""
-        self.base_path = Path(base_path) if base_path else Path(__file__).parent
-        self.cache_path = self.base_path / "cache"
-        self.cache_path.mkdir(exist_ok=True)
-
-        # Initialize modules
+    VERSION = "3.5.4"
+    
+    def __init__(self, workspace_path: Optional[str] = None):
+        if workspace_path:
+            self.workspace = Path(workspace_path)
+        else:
+            self.workspace = Path.home() / ".openclaw" / "workspace"
+            
+        self.memory_file = self.workspace / "MEMORY.md"
+        self.daily_dir = self.workspace / "memory"
+        self.daily_dir.mkdir(parents=True, exist_ok=True)
+        
         self.priority_parser = PriorityParser()
         self.vector_search = VectorSearch()
-        self.classifier = DynamicClassifier()
-        self.version_control = VersionControl(str(self.base_path))
-        self.memory_decay = MemoryDecay(self.cache_path)
-        self.auto_trigger = AutoTrigger(self)
-
-        # v3.1.0: Cantonese Grammar Branch
-        self.cantonese_branch = CantoneseSyntaxBranch()
-        # v3.3.2: Heartbeat 自我報告過濾器
-        self.heartbeat_filter = HeartbeatFilter()
+        self.dynamic_classifier = DynamicClassifier()
+        self.dedup = PersistentDedup(str(self.workspace / "data" / "dedup.json"), threshold=0.88, category_based=True)
+        self.version_control = VersionControl(str(self.workspace))
         
-        # v3.4.0: 新增模組
-        self.semantic_cache = get_cache(self.cache_path / "semantic_cache.json")
-        self.context_window = get_context_window()
-
-        # v3.5.0: Long-term Soul Archive
-        self.soul_memory_path = self.base_path / "soul_memory.md"
-        if not self.soul_memory_path.exists():
-            self.soul_memory_path.write_text("# Soul Memory - 最終儲存庫 (v3.6.1)\n", encoding='utf-8')
-
-        self.indexed = False
-
-    def update_soul_memory(self, label: str, content: str):
-        """v3.5.0: Incremental merge into long-term archive"""
-        current_mem = self.soul_memory_path.read_text(encoding='utf-8')
-        updated = merge_memory(current_mem, content, label)
-        self.soul_memory_path.write_text(updated, encoding='utf-8')
-        print(f"💾 Soul Merge SUCCESS: soul\"{label}\" updated.")
-        # Rebuild index if needed
         self.indexed = False
 
     def initialize(self):
-        """Initialize and build index"""
+        """Initialize the memory system and build the search index"""
         print(f"🧠 Initializing Soul Memory System v{self.VERSION}...")
-
-        # Load or build search index
-        index_file = self.cache_path / "index.json"
-
-        # v3.3.3: 每日快取自動重建 - 檢查快取日期
-        cache_outdated = False
-        if index_file.exists():
-            try:
-                with open(index_file, 'r', encoding='utf-8') as f:
-                    index_data = json.load(f)
-                if 'built_at' in index_data:
-                    built_date = index_data['built_at'].split('T')[0]
-                    today = datetime.now().strftime('%Y-%m-%d')
-                    if built_date != today:
-                        cache_outdated = True
-                        print(f"📅 Cache from {built_date}, rebuilding for {today}...")
-            except:
-                cache_outdated = True
-
-        if index_file.exists() and not cache_outdated:
-            try:
-                with open(index_file, 'r', encoding='utf-8') as f:
-                    index_data = json.load(f)
-                self.vector_search.load_index(index_data)
-                self.classifier.load_categories(index_data.get('categories', []))
-                self.indexed = True
-                print(f"✅ Loaded index with {len(index_data.get('segments', []))} segments")
-            except Exception as e:
-                print(f"⚠️  Failed to load index: {e}")
-                cache_outdated = True
-
-        if cache_outdated or not index_file.exists():
-            print("🔨 Building search index...")
-            self._build_index()
-            print("✅ Index built successfully")
-
-        # v3.4.0: 初始化語義緩存
-        cache_stats = self.semantic_cache.get_stats()
-        print(f"💾 Semantic Cache: {cache_stats['cache_size']} entries, {cache_stats['hit_rate']} hit rate")
         
-        # v3.4.0: 動態上下文窗口就緒
-        print(f"🎯 Dynamic Context Window: ready")
-
-        print("✅ Memory system initialized\n")
-
-    def _build_index(self):
-        """Build search index from memory files."""
-        # Reset in-memory index first
-        self.vector_search = VectorSearch()
-
-        memory_files = []
-
-        # Main long-term memory
-        main_memory = Path.home() / ".openclaw" / "workspace" / "MEMORY.md"
-        if main_memory.exists() and main_memory.is_file():
-            memory_files.append(main_memory)
-
-        # Long-term soul archive
-        if self.soul_memory_path.exists() and self.soul_memory_path.is_file():
-            memory_files.append(self.soul_memory_path)
-
-        # Daily memory files (latest first)
-        memory_dir = Path.home() / ".openclaw" / "workspace" / "memory"
-        if memory_dir.exists() and memory_dir.is_dir():
-            md_files = sorted(memory_dir.glob("*.md"), key=lambda x: x.name, reverse=True)
-            memory_files.extend(md_files)
-
-        # Index all discovered files
-        for memory_file in memory_files:
-            try:
-                self.vector_search.index_file(memory_file)
-            except Exception as e:
-                print(f"⚠️  Failed to index {memory_file}: {e}")
-
-        # Export and persist index
-        data = self.vector_search.export_index()
-        data['built_at'] = datetime.now().isoformat()
-        data['categories'] = self.classifier.get_categories()
-
-        index_file = self.cache_path / "index.json"
-        with open(index_file, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-
+        if self.memory_file.exists():
+            self.vector_search.index_file(self.memory_file)
+            
+        # Index daily files for the last 7 days
+        today = datetime.now()
+        for i in range(8):
+            date_str = (today - timedelta(days=i)).strftime('%Y-%m-%d')
+            daily_file = self.daily_dir / f"{date_str}.md"
+            if daily_file.exists():
+                self.vector_search.index_file(daily_file)
+        
         self.indexed = True
+        print("✅ Memory system initialized")
 
-    def search(self, query: str, top_k: int = 5, min_score: float = 0.0, 
-               use_cache: bool = True, use_dynamic: bool = True) -> List[Dict]:
-        """
-        Search memories with v3.4.0 optimizations
-        
-        Args:
-            query: Search query
-            top_k: Number of results (ignored if use_dynamic=True)
-            min_score: Minimum score threshold (ignored if use_dynamic=True)
-            use_cache: Enable semantic cache
-            use_dynamic: Enable dynamic context window
-            
-        Returns:
-            List of search results
-        """
-        # v3.4.0: 檢查語義緩存
-        if use_cache:
-            cached_results = self.semantic_cache.get(query)
-            if cached_results is not None:
-                print(f"💾 Cache HIT for query: '{query[:50]}...'")
-                # 從緩存的 dict 轉換回 SearchResult 對象
-                return [
-                    SearchResult(
-                        content=r['content'],
-                        score=r['score'],
-                        source=r['source'],
-                        line_number=r.get('line_number', 0),
-                        category=r.get('category', ''),
-                        priority=r['priority']
-                    )
-                    for r in cached_results
-                ]
-        
-        # v3.4.0: 動態上下文窗口
-        if use_dynamic:
-            params = self.context_window.get_params(query)
-            top_k = params['top_k']
-            min_score = params['min_score']
-            print(f"🎯 Dynamic strategy: top_k={top_k}, min_score={min_score}")
-        
-        # Execute search
-        results = self.vector_search.search(query, top_k=top_k, min_score=min_score)
-        
-        # Convert to dict format
-        result_dicts = [
-            {
-                'content': r.content,
-                'score': r.score,
-                'source': r.source,
-                'priority': r.priority if hasattr(r, 'priority') else 'N'
-            }
-            for r in results
+    def _extract_memory_payload(self, text: str) -> str:
+        """Extract a compact, reusable memory snippet from verbose context."""
+        if not text:
+            return ""
+
+        cleaned = text.strip()
+        cleaned = re.sub(r'```[\s\S]*?```', ' ', cleaned)
+        cleaned = re.sub(r'(?im)^\s*(user|assistant|system)\s*:\s*', '', cleaned)
+        cleaned = re.sub(r'Conversation info \(untrusted metadata\):[\s\S]*$', '', cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r'Sender \(untrusted metadata\):[\s\S]*$', '', cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r'\b(?:System|Assistant|User):\s*', '', cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r'<[^>]+>', ' ', cleaned)
+        cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+
+        if not cleaned:
+            return ""
+
+        fragments = re.split(r'(?<=[。！？!?\.])\s+|\n+', cleaned)
+        payloads = []
+        seen = set()
+        for fragment in fragments:
+            fragment = re.sub(r'(?im)^\s*(user|assistant|system)\s*:\s*', '', fragment).strip()
+            if not fragment:
+                continue
+            if len(fragment) < 10 and not re.search(r'[\u4e00-\u9fff]', fragment):
+                continue
+            key = fragment.lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            payloads.append(fragment)
+
+        if not payloads:
+            return cleaned[:240]
+
+        return ' '.join(payloads)[:320]
+
+    def _classify_query(self, query: str) -> str:
+        """Lightweight query bucket used for adaptive search and context routing."""
+        q = (query or '').lower()
+        if re.search(r'(記住|偏好|喜歡|身份|user|preference|like|favorite|timezone|name)', q):
+            return 'User'
+        if re.search(r'(qst|phi|varphi|fsca|dark matter|dark energy|physics|理論|物理|計算|公式|audit|審計)', q):
+            return 'QST'
+        if re.search(r'(config|設定|配置|token|api|gateway|port|model|provider|telegram|github|pwd|password)', q):
+            return 'Config'
+        if re.search(r'(上次|之前|剛才|recent|latest|last|今日|昨天|today|yesterday|剛剛)', q):
+            return 'Recent'
+        if re.search(r'(project|專案|repo|repository|deploy|issue|pr|pull request|workspace|build)', q):
+            return 'Project'
+        return 'General'
+
+    def _resolve_search_parameters(self, query: str, top_k: int, min_score: float) -> Tuple[int, float]:
+        """Tune search breadth/threshold based on query bucket."""
+        bucket = self._classify_query(query)
+        if bucket == 'User':
+            return min(top_k, 3), 2.0
+        if bucket == 'Recent':
+            return min(top_k, 3), 1.8
+        if bucket == 'QST':
+            return max(min(top_k, 5), 4), 2.5
+        if bucket == 'Config':
+            return min(max(top_k, 4), 6), 2.2
+        if bucket == 'Project':
+            return min(max(top_k, 4), 5), 2.0
+        return min(top_k, 2), 3.0
+
+    def _should_persist_memory(self, candidate: str, priority: str, category: str) -> Tuple[bool, str]:
+        """Gate what becomes long-term memory."""
+        text = (candidate or '').strip()
+        if len(text) < 12:
+            return False, 'too_short'
+
+        noisy_patterns = [
+            r'```', r'\bcommand exited with code\b', r'\btraceback\b', r'\bexec completed\b',
+            r'\bdrwxr', r'\bimporterror\b', r'\bpytest\b', r'\bconsole\.log\b'
         ]
-        
-        # v3.4.0: 保存到緩存
-        if use_cache and result_dicts:
-            self.semantic_cache.set(query, result_dicts)
-            print(f"💾 Cache SET for query: '{query[:50]}...'")
-        
-        return result_dicts
+        if any(re.search(pattern, text, re.IGNORECASE) for pattern in noisy_patterns):
+            return False, 'noisy'
 
-    def get_auto_context(self, query: str) -> str:
-        """v3.5.1: Get dynamic soul context with tag swapping"""
-        return get_memory_context(self, query)
+        if priority == 'C':
+            return True, 'critical'
 
-    def add_memory(self, content: str, auto_categorize: bool = True) -> str:
-        """v3.5.0: Enhanced add_memory with soul merge support"""
-        memory_id = super().add_memory(content, auto_categorize)
+        # v3.5.4: 放寬 stable_cues - 技術操作/項目/QST/文件都算重要
+        stable_cues = [
+            # 原有偏好/決策詞
+            r'\b(prefer|likes?|favorite|favour|use|choose|decide|remember|keep|avoid|needs?)\b',
+            r'(配置|設定|偏好|喜歡|記住|必須|決定|方案|選擇|保留)',
+            # 技術配置詞
+            r'\b(api|token|provider|model|gateway|port|github|telegram|workspace|skill|plugin|repo)\b',
+            # 技術操作詞（新增）
+            r'\b(install|安裝|部署|deploy|update|更新|upload|上傳|download|下載|push|pull|commit|clone)\b',
+            r'\b(create|創建|新增|add|edit|修改|delete|刪除|run|運行|test|測試|build|編譯)\b',
+            # QST/物理/文件詞（新增）
+            r'\b(qst|物理|physics|暗物質|dark matter|暗能量|dark energy|audit|審計|electron|電子)\b',
+            r'\b(latex|pdf|tex|markdown|docx|document|文件|文檔|paper|論文|article|文章)\b',
+            # 項目詞（新增）
+            r'\b(project|專案|youtube|translate|翻譯|simulator|模擬器|dashboard|monitor)\b',
+            # 對話主題詞（新增）
+            r'\b(劇情|story|plot|動漫|anime|龍珠|dragon ball|尋秦記)\b'
+        ]
+        # 放寬條件：[I] 或包含技術/項目關鍵詞都保存
+        if priority == 'I' or any(re.search(pattern, text, re.IGNORECASE) for pattern in stable_cues):
+            return True, 'important'
+
+        if category in {'User_Identity', 'Tech_Config'} and any(re.search(pattern, text, re.IGNORECASE) for pattern in stable_cues):
+            return True, 'identity_or_config'
+
+        if category == 'Project' and any(re.search(pattern, text, re.IGNORECASE) for pattern in [r'\b(plan|decision|status|deliver|deploy|issue|fix|update)\b', r'(計劃|決定|進度|部署|修復|更新)']):
+            return True, 'project'
+
+        return False, 'not_durable'
+
+    def search(self, query: str, top_k: int = 5, min_score: float = 0.0) -> List[Dict[str, Any]]:
+        """Search for relevant memories"""
+        if not self.indexed:
+            self.initialize()
+
+        resolved_top_k, resolved_min_score = self._resolve_search_parameters(query, top_k, min_score)
+        results = self.vector_search.search(query, top_k=resolved_top_k, min_score=resolved_min_score)
+        return results
+
+    def add_memory(self, content: str, priority: Optional[str] = None) -> str:
+        """Add a new memory with automatic classification and priority detection"""
+        parsed = self.priority_parser.parse(content)
+        if not priority:
+            priority = parsed.priority.value
+
+        candidate = self._extract_memory_payload(parsed.content)
+        if not candidate:
+            candidate = self._extract_memory_payload(content)
+
+        category = self.dynamic_classifier.classify(candidate)
+        should_persist, _reason = self._should_persist_memory(candidate, priority, category)
+        if not should_persist:
+            return hashlib.md5(candidate.encode()).hexdigest()
+
+        is_duplicate, _dup_type = self.dedup.is_duplicate(candidate, category)
+        if is_duplicate:
+            return hashlib.md5(candidate.encode()).hexdigest()
+
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+        memory_entry = f"\n\n---\n\n## {category} [{priority}] ({timestamp})\n\n{candidate}\n"
+
+        # Append to daily file
+        today_str = datetime.now().strftime('%Y-%m-%d')
+        daily_file = self.daily_dir / f"{today_str}.md"
+
+        with open(daily_file, "a", encoding="utf-8") as f:
+            f.write(memory_entry)
+
+        # Update index
+        self.vector_search.add_segment({
+            'content': candidate,
+            'priority': priority,
+            'category': category,
+            'timestamp': timestamp,
+            'source': str(daily_file)
+        })
+
+        self.dedup.save(candidate, category)
+
+        # Version control
+        self.version_control.commit(f"Add memory: {category} [{priority}]")
+
+        return hashlib.md5(candidate.encode()).hexdigest()
+
+    def post_response_trigger(self, query: str, response: str, importance_threshold: str = "I") -> Optional[str]:
+        """Automatically identify and save important content after a response"""
+        # Combine query and response for analysis
+        full_context = f"User: {query}\nAssistant: {response}"
         
-        # Check for soul"..." tag
-        match = re.search(r'soul"([^"]+)"', content)
-        if match:
-            label = match.group(1)
-            self.update_soul_memory(label, content)
+        priority = self.priority_parser.parse(full_context).priority.value
+        
+        # Check if it meets the importance threshold
+        priority_map = {"C": 3, "I": 2, "N": 1}
+        if priority_map.get(priority, 0) < priority_map.get(importance_threshold, 0):
+            return None
             
-        return memory_id
+        return self.add_memory(full_context, priority)
 
     def get_stats(self) -> Dict[str, Any]:
         """Get system statistics"""
-        cache_stats = self.semantic_cache.get_stats()
-        context_stats = self.context_window.get_stats("test")
-        
         return {
             'version': self.VERSION,
-            'indexed': self.indexed,
-            'semantic_cache': cache_stats,
-            'dynamic_context': {
-                'version': context_stats['version'],
-                'base_topK': context_stats['base_topK'],
-                'base_min_score': context_stats['base_min_score']
-            }
+            'indexed': self.indexed
         }
 
+    def stats(self) -> Dict[str, Any]:
+        """Backward-compatible stats alias."""
+        return self.get_stats()
 
-# Keep existing auto_trigger and other functions
-# ...
-['base_min_score']
-            }
-        }
-
-
-# Keep existing auto_trigger and other functions
-# ...
+def get_hk_datetime():
+    """Get current datetime in Hong Kong time (UTC+8)"""
+    return datetime.utcnow() + timedelta(hours=8)

@@ -10,6 +10,7 @@ import hashlib
 import os
 import re
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import List, Optional, Dict, Any
 from pathlib import Path
 
@@ -130,6 +131,23 @@ class VectorSearch:
                 expanded.update(self.SEMANTIC_EXPANSIONS[kw])
         return list(expanded)
 
+    def _source_recency_bonus(self, source: str) -> float:
+        """Prefer newer memories when scores tie."""
+        if not source:
+            return 0.0
+
+        match = re.search(r'(20\d{2}-\d{2}-\d{2})', source)
+        if not match:
+            return 0.0
+
+        try:
+            date_value = datetime.fromisoformat(match.group(1))
+        except ValueError:
+            return 0.0
+
+        base = datetime(2000, 1, 1)
+        return min(max((date_value - base).days / 36525.0, 0.0), 1.0)
+
     def add_segment(self, segment: Dict[str, Any]):
         """Add a memory segment"""
         ms = MemorySegment(
@@ -197,26 +215,33 @@ class VectorSearch:
                     exact_match_bonus = 2.0
 
                 priority_weight = {'C': 10, 'I': 5, 'N': 0}.get(seg.priority, 0)
+                recency_bonus = self._source_recency_bonus(seg.source)
                 # 總分 = 關鍵詞匹配 + 優先級加權 + 完整匹配加權
-                total_score = scores[seg_id] + exact_match_bonus
-                return (total_score, priority_weight, matches_count.get(seg.id, 0))
-            return (scores[seg_id], 0, 0)
+                total_score = scores[seg_id] + exact_match_bonus + recency_bonus
+                return (total_score, priority_weight, matches_count.get(seg.id, 0), recency_bonus)
+            return (scores[seg_id], 0, 0, 0.0)
 
         sorted_scores = sorted(scores.items(), key=sort_key, reverse=True)
         results = []
+        seen_results = set()
 
-        for seg_id, score in sorted_scores[:top_k]:
+        for seg_id, score in sorted_scores[: max(top_k * 3, top_k)]:
             seg = next((s for s in self.segments if s.id == seg_id), None)
             if seg:
                 # 重新計算總分（包含完整匹配加權）
                 content_lower = seg.content.lower()
                 query_lower = query.lower()
                 exact_match_bonus = 2.0 if query_lower in content_lower else 0.0
-                final_score = scores[seg_id] + exact_match_bonus
+                final_score = scores[seg_id] + exact_match_bonus + self._source_recency_bonus(seg.source)
                 
                 # v3.4.0: 過濾低於 min_score 的結果
                 if final_score < min_score:
                     continue
+
+                result_key = (seg.content.strip().lower(), seg.source, seg.line_number)
+                if result_key in seen_results:
+                    continue
+                seen_results.add(result_key)
 
                 results.append(SearchResult(
                     content=seg.content,
@@ -226,6 +251,9 @@ class VectorSearch:
                     category=seg.category,
                     priority=seg.priority
                 ))
+
+                if len(results) >= top_k:
+                    break
 
         return results
 

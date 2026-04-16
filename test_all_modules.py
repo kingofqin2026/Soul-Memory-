@@ -142,7 +142,7 @@ def test_core_system():
     # Test stats
     stats = system.stats()
     assert 'version' in stats, "Stats missing version"
-    assert stats['version'] == "2.1.0", "Version mismatch"
+    assert stats['version'] == system.VERSION, "Version mismatch"
     
     print("  ✅ Core System: PASS")
     return True
