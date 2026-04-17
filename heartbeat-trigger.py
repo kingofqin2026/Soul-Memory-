@@ -33,7 +33,7 @@ SESSIONS_JSON = SESSIONS_DIR / "sessions.json"
 DEDUP_FILE = Path.home() / ".openclaw" / "workspace" / "soul-memory" / "dedup_hashes.json"
 
 def get_active_session_id():
-    """獲取當前 active session 的 ID（排除 cron session）v3.5.7"""
+    """獲取當前 active session 的 ID（排除 cron/HEARTBEAT session）v3.5.8"""
     try:
         with open(SESSIONS_JSON, 'r', encoding='utf-8') as f:
             sessions = json.load(f)
@@ -44,8 +44,8 @@ def get_active_session_id():
         
         for key, data in sessions.items():
             if isinstance(data, dict) and 'updatedAt' in data:
-                # v3.5.7: 排除 cron session
-                if "cron" in key.lower():
+                # v3.5.7: 排除 cron session 和 HEARTBEAT session (agent:main:main)
+                if "cron" in key.lower() or key == "agent:main:main":
                     continue
                 session_id = data.get('sessionId', key)
                 if data['updatedAt'] > best_time:
