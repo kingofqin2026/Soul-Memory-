@@ -57,7 +57,7 @@ def get_active_session_id():
         print(f"⚠️ 無法讀取 sessions.json: {e}")
         return None
 
-def read_session_messages(session_id, hours=1):
+def read_session_messages(session_id, hours=3):
     """讀取 session 對話內容（最近 N 小時）"""
     session_file = SESSIONS_DIR / f"{session_id}.jsonl"
     
@@ -410,7 +410,7 @@ def main():
         print(f"📋 當前 Session: {session_id[:8]}...")
 
         # 讀取最近 1 小時的對話
-        messages = read_session_messages(session_id, hours=1)
+        messages = read_session_messages(session_id, hours=3)
         print(f"📝 找到 {len(messages)} 條 recent 消息")
 
         # 識別重要內容
