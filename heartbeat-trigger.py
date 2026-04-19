@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Soul Memory Heartbeat Auto-Save Trigger
-v3.5.3 - 超寬鬆模式：強制記錄技術操作（安裝/配置/開發）
+v3.5.10 - 檢查上次 heartbeat 到現在的消息，避免遺漏
 """
 
 import sys
@@ -31,6 +31,31 @@ SESSIONS_JSON = SESSIONS_DIR / "sessions.json"
 
 # 去重記錄文件
 DEDUP_FILE = Path.home() / ".openclaw" / "workspace" / "soul-memory" / "dedup_hashes.json"
+
+# Heartbeat 狀態文件（記錄上次執行時間）
+HEARTBEAT_STATE_FILE = Path.home() / ".openclaw" / "workspace" / "soul-memory" / "heartbeat_state.json"
+
+def get_heartbeat_state():
+    """讀取上次 heartbeat 執行時間"""
+    if not HEARTBEAT_STATE_FILE.exists():
+        return None
+    try:
+        with open(HEARTBEAT_STATE_FILE, 'r') as f:
+            data = json.load(f)
+        return data.get('last_check_time')
+    except:
+        return None
+
+def save_heartbeat_state():
+    """保存當前 heartbeat 執行時間"""
+    try:
+        HEARTBEAT_STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with open(HEARTBEAT_STATE_FILE, 'w') as f:
+            json.dump({
+                'last_check_time': datetime.now().isoformat()
+            }, f)
+    except Exception as e:
+        print(f"⚠️ 無法保存 heartbeat 狀態：{e}")
 
 def get_active_session_id():
     """獲取當前 active session 的 ID（排除 cron/HEARTBEAT session）v3.5.8"""
