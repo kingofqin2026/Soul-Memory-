@@ -82,8 +82,8 @@ def get_active_session_id():
         print(f"⚠️ 無法讀取 sessions.json: {e}")
         return None
 
-def read_session_messages(session_id, hours=3):
-    """讀取 session 對話內容（最近 N 小時）"""
+def read_session_messages(session_id, last_check_time=None, hours=3):
+    """讀取 session 對話內容（上次 heartbeat 到現在；若無狀態則 fallback 最近 N 小時）"""
     session_file = SESSIONS_DIR / f"{session_id}.jsonl"
     
     if not session_file.exists():
@@ -91,7 +91,16 @@ def read_session_messages(session_id, hours=3):
         return []
     
     messages = []
-    cutoff_time = datetime.now() - timedelta(hours=hours)
+    if last_check_time:
+        try:
+            cutoff_time = datetime.fromisoformat(last_check_time)
+            print(f"📅 檢查時間範圍: {cutoff_time.strftime('%Y-%m-%d %H:%M:%S')} → 現在")
+        except Exception:
+            cutoff_time = datetime.now() - timedelta(hours=hours)
+            print(f"⚠️ heartbeat_state 無效，fallback 檢查最近 {hours} 小時")
+    else:
+        cutoff_time = datetime.now() - timedelta(hours=hours)
+        print(f"📅 無 heartbeat_state，fallback 檢查最近 {hours} 小時")
     
     try:
         with open(session_file, 'r', encoding='utf-8') as f:
@@ -437,9 +446,11 @@ def main():
     else:
         print(f"📋 當前 Session: {session_id[:8]}...")
 
-        # 讀取最近 1 小時的對話
-        messages = read_session_messages(session_id, hours=3)
+        # 讀取上次 heartbeat 到現在的對話；首次無狀態時 fallback 最近 3 小時
+        last_check_time = get_heartbeat_state()
+        messages = read_session_messages(session_id, last_check_time=last_check_time, hours=3)
         print(f"📝 找到 {len(messages)} 條 recent 消息")
+        save_heartbeat_state()
 
         # 識別重要內容
         important = identify_important_content(messages)
