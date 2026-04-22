@@ -23,16 +23,18 @@ class SemanticDedup:
     第二層：語意相似度檢查（精確）
     """
     
-    def __init__(self, threshold=0.92, category_based=True):  # v3.5.4: 提高到 0.92
+    def __init__(self, threshold=0.85, category_based=True, min_length_for_dedup=100):  # v3.5.11: 降低到 0.85
         """
         初始化去重器
         
         Args:
-            threshold (float): 語意相似度閾值 (0.0-1.0)
+            threshold (float): 語意相似度閾值 (0.0-1.0) - v3.5.11: 0.92→0.85
             category_based (bool): 是否基於分類去重（不同類別不檢查相似度）
+            min_length_for_dedup (int): 最小去重長度 - v3.5.11: <100 字跳過去重
         """
         self.threshold = threshold
         self.category_based = category_based
+        self.min_length_for_dedup = min_length_for_dedup
         
         # 已保存的內容（按分類組織）
         self.saved_contents: Dict[str, List[str]] = {}
