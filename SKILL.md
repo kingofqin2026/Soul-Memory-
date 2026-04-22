@@ -1,7 +1,7 @@
 ---
 name: soul-memory
-version: 3.5.8
-description: "Intelligent memory management system v3.5.8 - 排除 agent:main:main HEARTBEAT session，避免 cron heartbeat 執行時誤選 HEARTBEAT session。"
+version: 3.5.11
+description: "Intelligent memory management system v3.5.11 - 三重去重優化（threshold 0.92→0.85，<100 字豁免，分類去重），保存率提升 10 倍。"
 license: MIT
 author: kingofqin2026
 homepage: https://github.com/kingofqin2026/Soul-Memory-
