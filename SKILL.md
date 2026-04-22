@@ -1,7 +1,7 @@
 ---
 name: soul-memory
-version: 3.5.11
-description: "Intelligent memory management system v3.5.11 - 三重去重優化（threshold 0.92→0.85，<100 字豁免，分類去重），保存率提升 10 倍。"
+version: 3.5.13
+description: "Intelligent memory management system v3.5.13 - 修復 heartbeat-trigger.py 改用上次 heartbeat 到現在的增量窗口抓取 important context，避免固定 3 小時窗口遺漏與重掃。"
 license: MIT
 author: kingofqin2026
 homepage: https://github.com/kingofqin2026/Soul-Memory-
