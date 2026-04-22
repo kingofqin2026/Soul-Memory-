@@ -149,8 +149,11 @@ def read_session_messages(session_id, hours=3):
     return messages
 
 def identify_important_content(messages):
-    """識別重要內容（超寬鬆模式 v3.4.0 - 強制記錄技術操作）"""
+    """識別重要內容（超寬鬆模式 v3.4.0 - 強制記錄技術操作）v3.5.12"""
     important = []
+    
+    # v3.5.12: 只處理用戶消息，不保存助手回應
+    messages = [msg for msg in messages if msg.get('role') == 'user']
     
     # 強制記錄關鍵詞（必須記錄 [C] Critical）
     force_record_keywords = [

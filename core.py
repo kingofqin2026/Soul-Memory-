@@ -18,7 +18,7 @@ from modules.semantic_dedup import PersistentDedup
 from modules.version_control import VersionControl
 
 class SoulMemorySystem:
-    VERSION = "3.5.11"
+    VERSION = "3.5.12"
     
     def __init__(self, workspace_path: Optional[str] = None):
         if workspace_path:
